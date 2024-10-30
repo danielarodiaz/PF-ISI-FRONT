@@ -53,13 +53,13 @@ const HomeAdmin = () => {
 
   return (
     <div className="container">
-      <div className="row mt-5">
+      <div className="row mt-3">
         <div className="col text-center">
           <h2 className="color-title">Gestionar Fila Virtual</h2>
         </div>
       </div>
       <div className="row mt-2">
-        <div className="col">
+        <div className="col text-center">
           {turnoActual && (
             <CardFilaNow
               turnoId={turnoActual.id}

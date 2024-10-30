@@ -56,8 +56,8 @@ const LoginAdmin = ({ cambiarLogin }) => {
   return (
     <div className="container">
       <div className="row justify-content-center mt-5">
-        <div className="col-md-6 col-lg-4">
-          <h3 className="text-center color-title mb-4">Inicio de Sesión</h3>
+        <div className="text-center col-md-6 col-lg-4">
+          <h3 className="color-title mb-4">Inicio de Sesión</h3>
           <div className="card p-4 shadow-sm">
             <h4 className="text-center">Hola, Bienvenido/a!</h4>
             <form onSubmit={handleSubmit}>

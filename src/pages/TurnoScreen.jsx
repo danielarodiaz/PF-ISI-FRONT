@@ -128,7 +128,7 @@ const TurnoPage = () => {
         <div className="col-lg-4 col-md-6 col-sm-8">
           <button
             type="button"
-            className="btn btn-danger w-50"
+            className="btn btn-danger w-50 mb-3"
             onClick={() => {
               localStorage.removeItem("legajo");
               localStorage.removeItem("tramite");

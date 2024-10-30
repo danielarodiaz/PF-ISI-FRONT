@@ -74,6 +74,7 @@ const FilaScreen = () => {
                 required
                 className="form-control"
                 placeholder="Número de legajo: 50481"
+                maxLength="5"
                 name="legajo"
                 value={legajo}
                 onChange={handleLegajoChange}
