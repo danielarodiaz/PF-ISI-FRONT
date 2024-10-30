@@ -1,26 +1,36 @@
-body{
-  padding-top: 70px;
-  margin: 0;
-}
-.d-flex {
-  display: flex; /* Flexbox para la estructura */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.min-vh-100 {
-  min-height: 100vh; /* Mínimo 100% de la altura de la ventana */
+/* Main content wrapper */
+.footer-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
+/* Push footer to bottom */
 .flex-grow-1 {
-  flex-grow: 1; /* Permite que esta sección crezca para llenar el espacio disponible */
+  flex: 1 0 auto;
 }
-.img-size{
+
+/* Footer styling */
+.app-footer {
+  flex-shrink: 0;
+  background-color: #343a40;
+  color: #f8f9fa;
+  padding: 1rem 0;
+  width: 100%;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.footer-img {
   max-width: 100px;
+  height: auto;
 }
-footer {
-  position: relative;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: #343a40; /* Color de fondo (puedes cambiarlo) */
-  color: white; /* Color del texto */
+
+.footer-text {
+  margin: 0.5rem 0;
 }

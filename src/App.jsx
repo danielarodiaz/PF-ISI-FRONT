@@ -23,7 +23,7 @@ function App() {
 
   return (
     <>
-      <div className="d-flex flex-column min-vh-100">
+      <div className="footer-container">
         <BrowserRouter basename="/PF-ISI-FRONT">
           <NavBar cambiarLogin={cambiarLogin} />
           <div className="flex-grow-1">

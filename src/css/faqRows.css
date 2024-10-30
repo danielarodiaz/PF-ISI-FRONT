@@ -6,17 +6,28 @@ body{margin-top:20px;}
 
 .card{
     max-width: 900px;
+    margin-left: auto;    /* Add this */
+    margin-right: auto;   /* Add this */
+    width: 100%;         /* Add this */
 }
+
 .faq_area {
     position: relative;
     z-index: 1;
     background-color: #f5f5ff;
+    display: flex;           /* Add this */
+    justify-content: center; /* Add this */
+    width: 100%;            /* Add this */
 }
 
 .faq-accordian {
     position: relative;
     z-index: 1;
+    width: 100%;            /* Add this */
+    max-width: 900px;       /* Add this */
+    margin: 0 auto;         /* Add this */
 }
+
 .faq-accordian .card {
     position: relative;
     z-index: 1;
@@ -86,4 +97,18 @@ body{margin-top:20px;}
     .support-button a {
         font-size: 13px;
     }
+}
+
+.faq-accordian .card {
+    width: 100%;
+    margin-bottom: 1rem;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #fff;
+    border: none;
+    padding: 1rem 1.5rem;
 }
