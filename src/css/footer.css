@@ -1,0 +1,26 @@
+body{
+  padding-top: 70px;
+  margin: 0;
+}
+.d-flex {
+  display: flex; /* Flexbox para la estructura */
+}
+
+.min-vh-100 {
+  min-height: 100vh; /* Mínimo 100% de la altura de la ventana */
+}
+
+.flex-grow-1 {
+  flex-grow: 1; /* Permite que esta sección crezca para llenar el espacio disponible */
+}
+.img-size{
+  max-width: 100px;
+}
+footer {
+  position: relative;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #343a40; /* Color de fondo (puedes cambiarlo) */
+  color: white; /* Color del texto */
+}

@@ -29,7 +29,7 @@ const ChatbotScreen = () => {
 
   return (
     <div className="chatbot-container mt-5 mx-auto p-3 shadow">
-      <h2 className="text-center mb-4 color-title">Chatbot</h2>
+      <h2 className="text-center mb-4 color-title">Soy Uteniano 😎</h2>
       <div className="chat-history p-3 bg-light rounded overflow-auto">
         {chatHistory.map((msg, index) => (
           <div key={index} className={`chat-message ${msg.autor}`}>

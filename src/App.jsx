@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NavBar from "./components/NavBar";
+import Footer from "./components/Footer";
 import WhatsAppScreen from "./pages/WhatsAppScreen";
 import FilaScreen from "./pages/FilaScreen";
 import TurnoScreen from "./pages/TurnoScreen";
@@ -22,29 +23,34 @@ function App() {
 
   return (
     <>
-      <BrowserRouter basename="/PF-ISI-FRONT">
-        <NavBar cambiarLogin={cambiarLogin} />
-        <Routes>
-          <Route path="/" element={<MainScreen />} />
-          <Route path="/fila" element={<FilaScreen />} />
-          <Route path="/whatsapp" element={<WhatsAppScreen />} />
-          <Route path="/turno" element={<TurnoScreen />} />
-          <Route path="/chatbot" element={<ChatbotScreen />} />
-          <Route path="/faq" element={<FaqScreen />} />
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoutes login={login}>
-                <RoutesApp />
-              </ProtectedRoutes>
-            }
-          />
-          <Route
-            path="/loginAdmin"
-            element={<LoginAdmin cambiarLogin={cambiarLogin} />}
-          />
-        </Routes>
-      </BrowserRouter>
+      <div className="d-flex flex-column min-vh-100">
+        <BrowserRouter basename="/PF-ISI-FRONT">
+          <NavBar cambiarLogin={cambiarLogin} />
+          <div className="flex-grow-1">
+            <Routes>
+              <Route path="/" element={<MainScreen />} />
+              <Route path="/fila" element={<FilaScreen />} />
+              <Route path="/whatsapp" element={<WhatsAppScreen />} />
+              <Route path="/turno" element={<TurnoScreen />} />
+              <Route path="/chatbot" element={<ChatbotScreen />} />
+              <Route path="/faq" element={<FaqScreen />} />
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoutes login={login}>
+                    <RoutesApp />
+                  </ProtectedRoutes>
+                }
+              />
+              <Route
+                path="/loginAdmin"
+                element={<LoginAdmin cambiarLogin={cambiarLogin} />}
+              />
+            </Routes>
+          </div>
+          <Footer />
+        </BrowserRouter>
+      </div>
     </>
   );
 }
