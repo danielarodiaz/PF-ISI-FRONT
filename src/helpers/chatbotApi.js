@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://lucasdepetris.duckdns.org:8080";
+const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
 
 // Función para enviar un mensaje al chatbot
 export const sendMessageToChatbot = async (message, historial = []) => {
