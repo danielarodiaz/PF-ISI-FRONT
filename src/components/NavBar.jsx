@@ -1,5 +1,5 @@
 import React from "react";
-import logo from "../assets/LogoInfo_track.png";
+import logoUTN from "../assets/UTN-TUC.png";
 import { Link, useLocation, NavLink } from "react-router-dom";
 
 import "../css/navbar.css";
@@ -17,7 +17,7 @@ const NavBar = ({ cambiarLogin }) => {
       <nav className="navbar navbar-expand-lg bg-body-tertiary">
         <div className="container-fluid m-2">
           <Link className="navbar-brand" to="/">
-            <img src={logo} alt="Logo InfoTrack" className="size-img" />
+            <img src={logoUTN} alt="Logo UTN-TUC" className="size-img" />
           </Link>
           <button
             className="navbar-toggler"

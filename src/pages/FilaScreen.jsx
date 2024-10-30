@@ -71,6 +71,7 @@ const FilaScreen = () => {
               <label>Ingrese su número de legajo</label>
               <input
                 type="number"
+                required
                 className="form-control"
                 placeholder="Número de legajo: 50481"
                 name="legajo"
