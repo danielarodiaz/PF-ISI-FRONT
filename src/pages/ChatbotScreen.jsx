@@ -1,9 +1,16 @@
-import React, { useState } from "react";
-import { sendMessageToChatbot } from "../helpers/chatbotApi";
+import React, { useState, useEffect } from "react";
+import { sendMessageToChatbot, verificarConexion } from "../helpers/chatbotApi";
 import "../css/chatbot.css";
 import { Spinner } from "react-bootstrap";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
 
 const ChatbotScreen = () => {
+  useEffect(() => {
+    verificarConexion();
+  }, []);
+
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +69,7 @@ const ChatbotScreen = () => {
           Enviar
         </button>
       </div>
+      <ToastContainer />
     </div>
   );
 };
