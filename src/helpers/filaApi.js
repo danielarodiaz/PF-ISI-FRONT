@@ -1,10 +1,10 @@
 import axios from "axios";
 
-const API_URL = "https://api.example.com/filaVirtual";
+const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
 
 export const getTurnos = async () => {
   try {
-    const response = await axios.get(`${API_URL}/turnos`);
+    const response = await axios.get(`${API_BASE_URL}/turnos`);
     return response.data;
   } catch (error) {
     console.error("Error fetching turnos:", error);
@@ -14,7 +14,7 @@ export const getTurnos = async () => {
 
 export const getTurnoById = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/turnos/${id}`);
+    const response = await axios.get(`${API_BASE_URL}/turnos/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching turno with id ${id}:`, error);
@@ -24,7 +24,7 @@ export const getTurnoById = async (id) => {
 
 export const createTurno = async (turnoData) => {
   try {
-    const response = await axios.post(`${API_URL}/turnos`, turnoData);
+    const response = await axios.post(`${API_BASE_URL}/turnos`, turnoData);
     return response.data;
   } catch (error) {
     console.error("Error creating turno:", error);
@@ -34,7 +34,7 @@ export const createTurno = async (turnoData) => {
 
 export const updateTurno = async (id, turnoData) => {
   try {
-    const response = await axios.put(`${API_URL}/turnos/${id}`, turnoData);
+    const response = await axios.put(`${API_BASE_URL}/turnos/${id}`, turnoData);
     return response.data;
   } catch (error) {
     console.error(`Error updating turno with id ${id}:`, error);
@@ -44,7 +44,7 @@ export const updateTurno = async (id, turnoData) => {
 
 export const deleteTurno = async (id) => {
   try {
-    const response = await axios.delete(`${API_URL}/turnos/${id}`);
+    const response = await axios.delete(`${API_BASE_URL}/turnos/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error deleting turno with id ${id}:`, error);

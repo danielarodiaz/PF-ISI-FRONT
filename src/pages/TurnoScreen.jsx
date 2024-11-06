@@ -37,7 +37,7 @@ const TurnoPage = () => {
         setProgreso((prev) => Math.min(prev + 20, 100)); // Incrementa el progreso
       } else {
         setEsTurno(true);
-        setTurnoActual("¡Es tu turno!");
+        setTurnoActual(`¡Es tu turno ${turnoActual}!`);
       }
     }, 2000);
 

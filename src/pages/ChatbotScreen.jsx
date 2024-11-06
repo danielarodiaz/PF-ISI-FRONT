@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { sendMessageToChatbot, verificarConexion } from "../helpers/chatbotApi";
-import "../css/chatbot.css";
+import { sendMessageToChatbot } from "../helpers/chatbotApi";
+import { verificarConexionChat } from "../helpers/verificationConnection";
+
 import { Spinner } from "react-bootstrap";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
+import "../css/chatbot.css";
 
 const ChatbotScreen = () => {
   useEffect(() => {
-    verificarConexion();
+    verificarConexionChat();
   }, []);
 
   const [message, setMessage] = useState("");

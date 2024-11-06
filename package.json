@@ -5,6 +5,7 @@
   "homepage": "https://danielarodiaz.github.io/PF-ISI-FRONT",
   "type": "module",
   "scripts": {
+    "start": "vite",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "dev": "vite",

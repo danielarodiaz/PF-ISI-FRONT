@@ -11,7 +11,7 @@ const TableFila = ({ fila, onAtenderTurno }) => {
             <th>Legajo</th>
             <th>Trámite</th>
             <th>Fecha y Hora</th>
-            <th>Posición en fila</th>
+            <th>Número de Tramite</th>
             <th>Acciones</th>
           </tr>
         </thead>
