@@ -12,37 +12,38 @@ const TurnoPage = () => {
   const [personasAdelante, setPersonasAdelante] = useState(5); // Personas por defecto en la fila
   const [tiempoEspera, setTiempoEspera] = useState(10); // Tiempo estimado en minutos
   const [progreso, setProgreso] = useState(0);
-  const [datosTurno, setDatosTurno] = useState({ legajo: "", tramite: "" });
+  const [datosTurno, setDatosTurno] = useState({ legajo: 0, tramite: "" , NombreTurno: ""});
 
   // Obtiene el último turno ingresado en filaUsuarios
   useEffect(() => {
     const filaUsuarios = JSON.parse(localStorage.getItem("filaUsuarios")) || [];
-    const ultimoTurno = filaUsuarios[filaUsuarios.length - 1]; // Selecciona el último registro
-
+    const ultimoTurno = filaUsuarios[0]; // Selecciona el último registro
+    console.log("ultimo turno:", ultimoTurno);
     if (ultimoTurno) {
       setDatosTurno({
         legajo: ultimoTurno.legajo,
         tramite: ultimoTurno.tramite,
+        nombreTurno: ultimoTurno.NombreTurno
       });
-      setTurnoActual(ultimoTurno.turno); // Muestra el turno asignado
+      setTurnoActual(ultimoTurno.nombreTurno); // Muestra el turno asignado
     }
   }, []);
 
-  // Simula el progreso del turno
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (personasAdelante > 0) {
-        setPersonasAdelante((prev) => Math.max(prev - 1, 0)); // Evita valores negativos
-        setTiempoEspera((prev) => Math.max(prev - 1, 0)); // Evita valores negativos
-        setProgreso((prev) => Math.min(prev + 20, 100)); // Incrementa el progreso
-      } else {
-        setEsTurno(true);
-        setTurnoActual(`¡Es tu turno ${turnoActual}!`);
-      }
-    }, 2000);
+  // // Simula el progreso del turno
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     if (personasAdelante > 0) {
+  //       setPersonasAdelante((prev) => Math.max(prev - 1, 0)); // Evita valores negativos
+  //       setTiempoEspera((prev) => Math.max(prev - 1, 0)); // Evita valores negativos
+  //       setProgreso((prev) => Math.min(prev + 20, 100)); // Incrementa el progreso
+  //     } else {
+  //       setEsTurno(true);
+  //       setTurnoActual(`¡Es tu turno ${turnoActual}!`);
+  //     }
+  //   }, 2000);
 
-    return () => clearInterval(interval);
-  }, [personasAdelante]);
+  //   return () => clearInterval(interval);
+  // }, [personasAdelante]);
 
   return (
     <div className="container text-center mt-1">

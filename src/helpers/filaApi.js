@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
+//const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
+const API_BASE_URL = "http://localhost:5132";
 
 export const getTurnos = async () => {
   try {
@@ -51,3 +52,29 @@ export const deleteTurno = async (id) => {
     throw error;
   }
 };
+
+export const getTramites = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/tramite`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching tramites:", error);
+    throw error;
+  }
+};
+
+export const postTurnoEnFila = async (legajo, idTramite) => {
+  try {
+    const turnoData = {
+      legajo: legajo,
+      idTramite: idTramite
+    };
+    const response = await axios.post(`${API_BASE_URL}/api/fila/agregarturnoafila`, turnoData);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting turno:", error);
+    throw error;
+  }
+};
+
+//export const personasDelanteEnLaFila
