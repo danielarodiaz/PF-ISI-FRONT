@@ -77,4 +77,12 @@ export const postTurnoEnFila = async (legajo, idTramite) => {
   }
 };
 
-//export const personasDelanteEnLaFila
+export const personasAdelanteEnLaFila = async (numeroDeTurno)=>{
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/Fila/ObtenerCantidadDePersonasAdelante?numeroTurno=${numeroDeTurno}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching personas delante en la fila:", error);
+    throw error;
+  }
+};

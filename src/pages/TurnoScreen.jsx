@@ -3,6 +3,7 @@ import { Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 import "../css/turno.css";
+import { personasAdelanteEnLaFila } from "../helpers/filaApi";
 
 const TurnoPage = () => {
   const navigate = useNavigate();
@@ -13,12 +14,32 @@ const TurnoPage = () => {
   const [tiempoEspera, setTiempoEspera] = useState(10); // Tiempo estimado en minutos
   const [progreso, setProgreso] = useState(0);
   const [datosTurno, setDatosTurno] = useState({ legajo: 0, tramite: "" , NombreTurno: ""});
+  const [totalPersonas, setTotalPersonas] = useState(0);
+
+  const fetchPersonasAdelante = async () => {
+    try {
+      const personasAdelanteData = await personasAdelanteEnLaFila(turnoActual);
+      
+      setPersonasAdelante(personasAdelanteData);
+    } catch (error) {
+      console.error("Error fetching personasAdelante:", error);
+    }    
+  };
+
+  const calcularProgreso = (personasAdelante, totalPersonas) => {
+    return ((totalPersonas - personasAdelante) / totalPersonas) * 100;
+  };
+
+  const calcularTiempoEspera = (personasAdelante) => {
+    setTiempoEspera( personasAdelante * 3);
+  };
+  
 
   // Obtiene el último turno ingresado en filaUsuarios
   useEffect(() => {
     const filaUsuarios = JSON.parse(localStorage.getItem("filaUsuarios")) || [];
     const ultimoTurno = filaUsuarios[0]; // Selecciona el último registro
-    console.log("ultimo turno:", ultimoTurno);
+    //console.log("ultimo turno:", ultimoTurno);
     if (ultimoTurno) {
       setDatosTurno({
         legajo: ultimoTurno.legajo,
@@ -26,8 +47,18 @@ const TurnoPage = () => {
         nombreTurno: ultimoTurno.NombreTurno
       });
       setTurnoActual(ultimoTurno.nombreTurno); // Muestra el turno asignado
+      
+      fetchPersonasAdelante();
+
+      calcularTiempoEspera(personasAdelante);
     }
   }, []);
+
+  useEffect(() => {
+    const totalPersonas = personasAdelante + 1; // Suponiendo que la persona actual también cuenta
+    setProgreso(calcularProgreso(personasAdelante, totalPersonas));
+  }, [personasAdelante]);
+
 
   // // Simula el progreso del turno
   // useEffect(() => {
