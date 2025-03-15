@@ -1,53 +1,61 @@
 import React, { useState, useEffect } from "react";
 import TableFila from "../components/TableFila";
 import CardFilaNow from "../components/CardFilaNow";
-import { initializeDatabase } from "../data/dataFila"; // Importamos los datos de fila
+import { getFila } from "../data/dataFila"; // Importamos los datos de fila
 
 const HomeAdmin = () => {
-  useEffect(() => {
-    initializeDatabase();
-  }, []);
-  const filaUsuarios = JSON.parse(localStorage.getItem("filaUsuarios")) || [];
-  console.log("Datos recuperados de localStorage:", filaUsuarios);
-
-  const [fila, setFila] = useState(filaUsuarios); // Carga la fila desde dataFila.js
-  const [turnoActual, setTurnoActual] = useState(null); // Estado del turno en atención
-  const [atendiendo, setAtendiendo] = useState(false); // Control del estado de atención
+  const [fila, setFila] = useState([]); // Lista de turnos
+  const [turnoActual, setTurnoActual] = useState(null); // Turno en atención
+  const [atendiendo, setAtendiendo] = useState(false); // Estado de atención
   const [segundos, setSegundos] = useState(0); // Cronómetro en segundos
 
-  // Función para seleccionar un turno a atender e iniciar cronómetro
+  // Función para obtener y transformar los datos de la API
+  const fetchFila = async () => {
+    try {
+      const filaDb = await getFila();
+      console.log("Fila original desde API:", filaDb);
+
+      // Transformamos los datos para extraer solo la información relevante
+      const filaTransformada = filaDb.map((item) => ({
+        id: item.idTurno,
+        legajo: item.turno.legajo,
+        tramite: item.turno.tramite.descripcion,
+        fecha: item.turno.fechaDeCreacion,
+        turno: item.turno.nombreTurno,
+        atendido: item.turno.estadoTurno.descripcion === "Atendido",
+      }));
+
+      console.log("Fila transformada:", filaTransformada);
+      setFila(filaTransformada);
+    } catch (error) {
+      console.error("Error fetching fila:", error);
+    }
+  };
+
+  // Llamamos a fetchFila cuando el componente se monta
+  useEffect(() => {
+    fetchFila();
+  }, []);
+
+  // Función para seleccionar un turno y empezar la atención
   const atenderTurno = (turno) => {
     setTurnoActual(turno);
     setAtendiendo(true);
     setSegundos(0);
   };
-  //logica para el cronometro
-  useEffect(() => {
-    let intervalo;
-    if (atendiendo) {
-      intervalo = setInterval(() => {
-        setSegundos((prev) => prev + 1);
-      }, 1000);
-    } else {
-      clearInterval(intervalo);
-    }
-    return () => clearInterval(intervalo);
-  }, [atendiendo]);
 
-  // Función para finalizar la atención y actualizar solo el turno actual como atendido
+  // Función para finalizar la atención
   const finalizarAtencion = () => {
     if (turnoActual) {
-      // Actualizar solo el turno actual en el estado de fila
-      const nuevoFila = fila.map((turno) =>
-        turno.id === turnoActual.id ? { ...turno, atendido: true } : turno
+      // Actualizamos solo el turno atendido en el estado
+      const nuevaFila = fila.map((t) =>
+        t.id === turnoActual.id ? { ...t, atendido: true } : t
       );
 
-      setFila(nuevoFila); // Actualiza el estado de la fila
-      localStorage.setItem("filaUsuarios", JSON.stringify(nuevoFila)); // Actualiza el localStorage
-
-      setAtendiendo(false); // Detener el cronómetro
-      setTurnoActual(null); // Resetear el turno actual
-      setSegundos(0); // Reiniciar el cronómetro
+      setFila(nuevaFila); // Actualizamos la fila
+      setAtendiendo(false); // Detenemos la atención
+      setTurnoActual(null); // Reseteamos el turno actual
+      setSegundos(0); // Reiniciamos el cronómetro
     }
   };
 
@@ -58,6 +66,8 @@ const HomeAdmin = () => {
           <h2 className="color-title">Gestionar Fila Virtual</h2>
         </div>
       </div>
+
+      {/* Muestra el turno actual en atención */}
       <div className="row mt-2">
         <div className="col text-center">
           {turnoActual && (
@@ -70,6 +80,8 @@ const HomeAdmin = () => {
           )}
         </div>
       </div>
+
+      {/* Botón para finalizar la atención */}
       {atendiendo && (
         <div className="row mt-3">
           <div className="col text-center">
@@ -79,6 +91,8 @@ const HomeAdmin = () => {
           </div>
         </div>
       )}
+
+      {/* Tabla con los turnos en la fila */}
       <div className="row mt-5">
         <div className="col text-center">
           <TableFila fila={fila} onAtenderTurno={atenderTurno} />

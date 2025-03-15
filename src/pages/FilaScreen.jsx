@@ -42,7 +42,7 @@ const [tramites, setTramites] = useState([]);
     setTramite(selectedTramite);
   
     // Find the index of the selected tramite
-    const selectedIndex = tramites.findIndex(tramite => tramite.descripcion === selectedTramite);
+    const selectedIndex = tramites.findIndex(tramite => tramite.descripcion === selectedTramite) + 1;
     setIndexTramite(selectedIndex);
   
     // Mostrar advertencia si el trámite tiene un asterisco
