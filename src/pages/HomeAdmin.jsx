@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import TableFila from "../components/TableFila";
 import CardFilaNow from "../components/CardFilaNow";
 import { getFila } from "../data/dataFila"; // Importamos los datos de fila
+import { atenderTurnoConId, putFinalizarAtencion } from "../helpers/filaApi"; // Importamos la función para atender un turno
+import { postTurnoEnFila } from "../helpers/filaApi"; // Importamos la función para agregar un turno a la fila
+
 
 const HomeAdmin = () => {
   const [fila, setFila] = useState([]); // Lista de turnos
@@ -13,7 +16,7 @@ const HomeAdmin = () => {
   const fetchFila = async () => {
     try {
       const filaDb = await getFila();
-      console.log("Fila original desde API:", filaDb);
+      //console.log("Fila original desde API:", filaDb);
 
       // Transformamos los datos para extraer solo la información relevante
       const filaTransformada = filaDb.map((item) => ({
@@ -25,7 +28,7 @@ const HomeAdmin = () => {
         atendido: item.turno.estadoTurno.descripcion === "Atendido",
       }));
 
-      console.log("Fila transformada:", filaTransformada);
+      //console.log("Fila transformada:", filaTransformada);
       setFila(filaTransformada);
     } catch (error) {
       console.error("Error fetching fila:", error);
@@ -39,9 +42,11 @@ const HomeAdmin = () => {
 
   // Función para seleccionar un turno y empezar la atención
   const atenderTurno = (turno) => {
+    atenderTurnoConId(turno.id);
+    console.log("Atendiendo turno:", turno);
     setTurnoActual(turno);
     setAtendiendo(true);
-    setSegundos(0);
+    setSegundos(60); // Iniciamos el cronómetro en 60 segundos
   };
 
   // Función para finalizar la atención
@@ -51,7 +56,7 @@ const HomeAdmin = () => {
       const nuevaFila = fila.map((t) =>
         t.id === turnoActual.id ? { ...t, atendido: true } : t
       );
-
+      putFinalizarAtencion(); // Enviamos la petición a la API
       setFila(nuevaFila); // Actualizamos la fila
       setAtendiendo(false); // Detenemos la atención
       setTurnoActual(null); // Reseteamos el turno actual
@@ -72,10 +77,12 @@ const HomeAdmin = () => {
         <div className="col text-center">
           {turnoActual && (
             <CardFilaNow
-              turnoId={turnoActual.id}
-              numero={turnoActual.turno}
-              tiempo={turnoActual.fecha}
-              segundos={segundos}
+              turnoData={{
+                legajo: turnoActual.legajo,
+                tramite: turnoActual.tramite,
+                fecha: turnoActual.fecha,
+                turno: turnoActual.turno
+              }}
             />
           )}
         </div>

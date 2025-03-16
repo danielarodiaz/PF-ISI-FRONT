@@ -50,16 +50,12 @@ const TurnoPage = () => {
       
       fetchPersonasAdelante(ultimoTurno.nombreTurno);
 
-      
+      calcularTiempoEspera(personasAdelante);
+     const totalPersonas = personasAdelante + 1; // Suponiendo que la persona actual también cuenta
+      setProgreso(calcularProgreso(personasAdelante, totalPersonas));
     }
   }, []);
 
-  useEffect(() => {
-    calcularTiempoEspera(personasAdelante);
-    const totalPersonas = personasAdelante + 1; // Suponiendo que la persona actual también cuenta
-    setProgreso(calcularProgreso(personasAdelante, totalPersonas));
-  }, [personasAdelante]);
-  
 
   // // Simula el progreso del turno
   // useEffect(() => {

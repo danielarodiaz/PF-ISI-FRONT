@@ -99,3 +99,26 @@ export const personasAdelanteEnLaFila = async (numeroTurno) => {
   }
 };
 
+export const atenderTurnoConId = async (idTurno) => {
+  if (!idTurno) {
+    throw new Error("numeroTurno is required");
+  }
+
+  try {
+    const url = `${API_BASE_URL}/api/Fila/${idTurno}/atender`;
+    const response = await axios.put(url);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const putFinalizarAtencion = async () => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/api/fila/finalizaratencion`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching put finalizar atencion:", error);
+    throw error;
+  }
+};
