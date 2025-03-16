@@ -1,6 +1,11 @@
 import React from "react";
 
 const TableFila = ({ fila, onAtenderTurno }) => {
+  const formatFecha = (fecha) => {
+    const date = new Date(fecha);
+    return date.toLocaleString();
+  };
+
   return (
     <div>
       <h1 className="color-title bg-dark">Fila Virtual</h1>
@@ -20,7 +25,7 @@ const TableFila = ({ fila, onAtenderTurno }) => {
               <tr key={turno.id} className={turno.atendido ? "bg-secondary text-muted" : ""}>
                 <td>{turno.legajo}</td>
                 <td>{turno.tramite}</td>
-                <td>{turno.fecha}</td>
+                <td>{formatFecha(turno.fecha)}</td>
                 <td>{turno.turno}</td>
                 <td>
                   {!turno.atendido ? (
