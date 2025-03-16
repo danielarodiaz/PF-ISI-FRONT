@@ -6,12 +6,12 @@ import { getTramites, postTurnoEnFila } from "../helpers/filaApi.js";
 
 const FilaScreen = () => {
   const navigate = useNavigate();
-    const [legajo, setLegajo] = useState("");
+  const [legajo, setLegajo] = useState("");
   const [noLegajo, setNoLegajo] = useState(false);
   const [tramite, setTramite] = useState("");
   const[indexTramite, setIndexTramite] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
-const [tramites, setTramites] = useState([]);
+  const [tramites, setTramites] = useState([]);
 
   useEffect(() => {
     initializeDatabase();
@@ -40,10 +40,14 @@ const [tramites, setTramites] = useState([]);
   const handleTramiteChange = (e) => {
     const selectedTramite = e.target.value;
     setTramite(selectedTramite);
+
+    console.log("Tramite seleccionado:", selectedTramite);
   
     // Find the index of the selected tramite
     const selectedIndex = tramites.findIndex(tramite => tramite.descripcion === selectedTramite) + 1;
     setIndexTramite(selectedIndex);
+
+    console.log("Index del tramite seleccionado:", selectedIndex);
   
     // Mostrar advertencia si el trámite tiene un asterisco
     setShowWarning(selectedTramite.endsWith("*"));
@@ -55,6 +59,7 @@ const [tramites, setTramites] = useState([]);
 
     const sendTurno = async () => {
       try {
+        console.log("Enviando turno:", legajo, tramite);
         const turnoData = await postTurnoEnFila(legajo,indexTramite);
         console.log("Turno enviado:", turnoData);
         localStorage.clear()

@@ -77,12 +77,25 @@ export const postTurnoEnFila = async (legajo, idTramite) => {
   }
 };
 
-export const personasAdelanteEnLaFila = async (numeroDeTurno)=>{
+export const personasAdelanteEnLaFila = async (numeroTurno) => {
+  if (!numeroTurno) {
+    throw new Error("numeroTurno is required");
+  }
+
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/Fila/ObtenerCantidadDePersonasAdelante?numeroTurno=${numeroDeTurno}`);
+    const url = `${API_BASE_URL}/api/Fila/ObtenerCantidadDePersonasAdelante`;
+    console.log("Request URL:", url);
+    console.log("Request Params:", { numeroTurno });
+
+    const response = await axios.get(url, {
+      params: { numeroTurno: numeroTurno }
+    });
+    console.log("Response Data:", response.data);
+
     return response.data;
   } catch (error) {
     console.error("Error fetching personas delante en la fila:", error);
     throw error;
   }
 };
+

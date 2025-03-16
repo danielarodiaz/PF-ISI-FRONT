@@ -16,10 +16,10 @@ const TurnoPage = () => {
   const [datosTurno, setDatosTurno] = useState({ legajo: 0, tramite: "" , NombreTurno: ""});
   const [totalPersonas, setTotalPersonas] = useState(0);
 
-  const fetchPersonasAdelante = async () => {
+  const fetchPersonasAdelante = async (nombreTurno) => {
     try {
-      const personasAdelanteData = await personasAdelanteEnLaFila(turnoActual);
-      
+      const personasAdelanteData = await personasAdelanteEnLaFila(nombreTurno);
+      console.log("Personas adelante:", personasAdelanteData);
       setPersonasAdelante(personasAdelanteData);
     } catch (error) {
       console.error("Error fetching personasAdelante:", error);
@@ -48,17 +48,18 @@ const TurnoPage = () => {
       });
       setTurnoActual(ultimoTurno.nombreTurno); // Muestra el turno asignado
       
-      fetchPersonasAdelante();
+      fetchPersonasAdelante(ultimoTurno.nombreTurno);
 
-      calcularTiempoEspera(personasAdelante);
+      
     }
   }, []);
 
   useEffect(() => {
+    calcularTiempoEspera(personasAdelante);
     const totalPersonas = personasAdelante + 1; // Suponiendo que la persona actual también cuenta
     setProgreso(calcularProgreso(personasAdelante, totalPersonas));
   }, [personasAdelante]);
-
+  
 
   // // Simula el progreso del turno
   // useEffect(() => {
