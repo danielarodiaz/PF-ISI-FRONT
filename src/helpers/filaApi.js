@@ -13,12 +13,14 @@ export const getTurnos = async () => {
   }
 };
 
-export const getTurnoById = async (id) => {
+export const getTurnoById = async (idTurno) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/turnos/${id}`);
+    const response = await axios.get(`${API_BASE_URL}/api/Turno/ObtenerTurnoByID`, {
+      params: { idTurno: idTurno }
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching turno with id ${id}:`, error);
+    console.error(`Error fetching turno with id ${idTurno}:`, error);
     throw error;
   }
 };
@@ -77,18 +79,18 @@ export const postTurnoEnFila = async (legajo, idTramite) => {
   }
 };
 
-export const personasAdelanteEnLaFila = async (numeroTurno) => {
-  if (!numeroTurno) {
+export const personasAdelanteEnLaFila = async (idTurno) => {
+  if (!idTurno) {
     throw new Error("numeroTurno is required");
   }
 
   try {
     const url = `${API_BASE_URL}/api/Fila/ObtenerCantidadDePersonasAdelante`;
     console.log("Request URL:", url);
-    console.log("Request Params:", { numeroTurno });
+    console.log("Request Params:", { idTurno });
 
     const response = await axios.get(url, {
-      params: { numeroTurno: numeroTurno }
+      params: { idTurno: idTurno }
     });
     console.log("Response Data:", response.data);
 
@@ -122,3 +124,4 @@ export const putFinalizarAtencion = async () => {
     throw error;
   }
 };
+

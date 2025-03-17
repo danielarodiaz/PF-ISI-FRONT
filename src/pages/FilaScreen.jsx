@@ -59,16 +59,12 @@ const FilaScreen = () => {
 
     const sendTurno = async () => {
       try {
-        console.log("Enviando turno:", legajo, tramite);
-        const turnoData = await postTurnoEnFila(legajo,indexTramite);
-        console.log("Turno enviado:", turnoData);
-        localStorage.clear()
-        const filaUsuarios = JSON.parse(localStorage.getItem("filaUsuarios")) || [];
-        filaUsuarios.push(turnoData);
-        localStorage.setItem("filaUsuarios", JSON.stringify(filaUsuarios));
-        navigate("/turno");
+      console.log("Enviando turno:", legajo, tramite);
+      const turnoData = await postTurnoEnFila(legajo, indexTramite);
+      console.log("Turno enviado:", turnoData);
+      navigate(`/turno/${turnoData.idTurno}`);
       } catch (error) {
-        console.error("Error fetching tramites:", error);
+      console.error("Error fetching tramites:", error);
       }
     };
     sendTurno();

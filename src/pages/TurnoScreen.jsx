@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 import "../css/turno.css";
 import { personasAdelanteEnLaFila } from "../helpers/filaApi";
+import {getTurnoById} from "../helpers/filaApi";
+import { useParams } from "react-router-dom";
 
 const TurnoPage = () => {
   const navigate = useNavigate();
@@ -13,65 +15,95 @@ const TurnoPage = () => {
   const [personasAdelante, setPersonasAdelante] = useState(5); // Personas por defecto en la fila
   const [tiempoEspera, setTiempoEspera] = useState(10); // Tiempo estimado en minutos
   const [progreso, setProgreso] = useState(0);
-  const [datosTurno, setDatosTurno] = useState({ legajo: 0, tramite: "" , NombreTurno: ""});
+  const [datosTurno, setDatosTurno] = useState({ legajo: 0, tramite: "", NombreTurno: "" });
   const [totalPersonas, setTotalPersonas] = useState(0);
+  const [porAtender, setPorAtender] = useState(false);
+  const { idTurno } = useParams();
 
-  const fetchPersonasAdelante = async (nombreTurno) => {
+
+  const obtenerTurno = async (idTurno) => {
     try {
-      const personasAdelanteData = await personasAdelanteEnLaFila(nombreTurno);
+      const turnoData = await getTurnoById(idTurno);
+      console.log("Turno:", turnoData);
+      setDatosTurno(turnoData);
+      fetchPersonasAdelante(turnoData);
+      setTurnoActual(turnoData.nombreTurno); // Muestra el turno asignado
+
+      console.log("Estado del turno:", turnoData.idEstadoTurno);
+      
+
+    } catch (error) {
+      console.error("Error fetching turno:", error);
+    }
+  };
+
+  const fetchPersonasAdelante = async (turnoData) => {
+    try {
+      const personasAdelanteData = await personasAdelanteEnLaFila(turnoData.idTurno);
       console.log("Personas adelante:", personasAdelanteData);
       setPersonasAdelante(personasAdelanteData);
+      calcularTiempoEspera(personasAdelanteData);
+
+      const totalPersonas = personasAdelanteData + 1; // Suponiendo que la persona actual también cuenta
+      setProgreso(calcularProgreso(personasAdelanteData, totalPersonas));
+
+      if(turnoData.idEstadoTurno == 3){
+        navigate("/"); // Redirige a la página principal
+      }
+
+      console.log("estado turnoooooo: ", turnoData.idEstadoTurno);
+      if (personasAdelanteData === 0 && turnoData.idEstadoTurno == 1) {
+        setPorAtender(true);
+        setTurnoActual("Te están por atender");
+      } else if (turnoData.idEstadoTurno == 2) {
+        setEsTurno(true);
+       // setTurnoActual("¡Es tu turno!");
+         setTurnoActual(`¡Es tu turno ${turnoData.nombreTurno}!`);
+      }
+      
+
+      
     } catch (error) {
       console.error("Error fetching personasAdelante:", error);
-    }    
+    }
   };
+
+
 
   const calcularProgreso = (personasAdelante, totalPersonas) => {
     return ((totalPersonas - personasAdelante) / totalPersonas) * 100;
   };
 
   const calcularTiempoEspera = (personasAdelante) => {
-    setTiempoEspera( personasAdelante * 3);
+    setTiempoEspera(personasAdelante * 3);
   };
-  
+
 
   // Obtiene el último turno ingresado en filaUsuarios
   useEffect(() => {
-    const filaUsuarios = JSON.parse(localStorage.getItem("filaUsuarios")) || [];
-    const ultimoTurno = filaUsuarios[0]; // Selecciona el último registro
-    //console.log("ultimo turno:", ultimoTurno);
-    if (ultimoTurno) {
-      setDatosTurno({
-        legajo: ultimoTurno.legajo,
-        tramite: ultimoTurno.tramite,
-        nombreTurno: ultimoTurno.NombreTurno
-      });
-      setTurnoActual(ultimoTurno.nombreTurno); // Muestra el turno asignado
-      
-      fetchPersonasAdelante(ultimoTurno.nombreTurno);
-
-      calcularTiempoEspera(personasAdelante);
-     const totalPersonas = personasAdelante + 1; // Suponiendo que la persona actual también cuenta
-      setProgreso(calcularProgreso(personasAdelante, totalPersonas));
+    if (idTurno) {
+      console.log("idTurno:", idTurno);
+      obtenerTurno(idTurno);
     }
-  }, []);
+    else{
+      console.log("no valid idTurno:", idTurno);
+    }
 
+    // const filaUsuarios = JSON.parse(localStorage.getItem("filaUsuarios")) || [];
+    // const ultimoTurno = filaUsuarios[0]; // Selecciona el último registro
+    // console.log("ultimo turno:", ultimoTurno);
+    // if (ultimoTurno) {
+    //   setDatosTurno({
+    //     legajo: ultimoTurno.legajo,
+    //     tramite: ultimoTurno.tramite,
+    //     nombreTurno: ultimoTurno.NombreTurno,
+    //     idEstadoTurno: ultimoTurno.idEstadoTurno
+    //   });
 
-  // // Simula el progreso del turno
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     if (personasAdelante > 0) {
-  //       setPersonasAdelante((prev) => Math.max(prev - 1, 0)); // Evita valores negativos
-  //       setTiempoEspera((prev) => Math.max(prev - 1, 0)); // Evita valores negativos
-  //       setProgreso((prev) => Math.min(prev + 20, 100)); // Incrementa el progreso
-  //     } else {
-  //       setEsTurno(true);
-  //       setTurnoActual(`¡Es tu turno ${turnoActual}!`);
-  //     }
-  //   }, 2000);
-
-  //   return () => clearInterval(interval);
-  // }, [personasAdelante]);
+      //obtenerTurno(ultimoTurno.idTurno);
+      
+    // }
+  }, [idTurno]);
 
   return (
     <div className="container text-center mt-1">
@@ -88,7 +120,7 @@ const TurnoPage = () => {
           </div>
           <div
             className={`card ${
-              esTurno ? "bg-success text-white" : "color-title"
+              esTurno ? "bg-success text-white" : porAtender ? "bg-warning text-dark" : "color-title"
             }`}
           >
             <div className="card-body size-font">
@@ -128,7 +160,7 @@ const TurnoPage = () => {
         <div className="col-md-6">
           {esTurno ? (
             <div>
-              <h5>Preséntate en Dpto. Alumnos por {datosTurno.tramite}</h5>
+              <h5>Preséntate en Dpto. Alumnos por {datosTurno.tramite?.descripcion}</h5>
             </div>
           ) : (
             <>
