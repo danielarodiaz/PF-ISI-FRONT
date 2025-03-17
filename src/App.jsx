@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import NavBar from "./components/NavBar";
@@ -14,11 +14,29 @@ import ProtectedRoutes from "./routes/ProtectedRoutes";
 import LoginAdmin from "./pages/LoginAdmin";
 import ChatbotScreen from "./pages/ChatbotScreen";
 import FaqScreen from "./pages/FaqScreen";
+import { verificarToken } from "./helpers/login"; // Asegúrate de que existe esta función
+
+
 
 function App() {
-  const [login, setLogin] = useState(false);
+  const [login, setLogin] = useState(!!localStorage.getItem("token")); // Si hay token, login es true
+
+
+  // useEffect(() => {
+  //   const checkToken = async () => {
+  //     const token = localStorage.getItem("token");
+  //     if (token) {
+  //       const valido = await verificarToken(token);
+  //       setLogin(valido);
+  //     }
+  //   };
+  //   checkToken();
+  // }, []);
 
   const cambiarLogin = () => {
+    if (login) {
+      localStorage.removeItem("token"); // Si está logueado y cierra sesión, borra el token
+    }
     setLogin(!login);
   };
 
@@ -32,7 +50,8 @@ function App() {
               <Route path="/" element={<MainScreen />} />
               <Route path="/fila" element={<FilaScreen />} />
               <Route path="/whatsapp" element={<WhatsAppScreen />} />
-              <Route path="/turno" element={<TurnoScreen />} />
+              <Route path="/turno/:idTurno" element={<TurnoScreen />} />
+              {/* <Route path="/turno" element={<TurnoScreen />} /> */}
               <Route path="/chatbot" element={<ChatbotScreen />} />
               <Route path="/faq" element={<FaqScreen />} />
               <Route
@@ -55,5 +74,4 @@ function App() {
     </>
   );
 }
-
 export default App;
