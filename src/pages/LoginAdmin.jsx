@@ -39,6 +39,8 @@ const LoginAdmin = ({ cambiarLogin }) => {
       const token = await getToken(user, password);
       if (token) {
         cambiarLogin();
+        localStorage.setItem("token", token.token);
+        //console.log("Token seteado en localStorage:", token);
         navigate("/homeAdmin");
       } else {
         Swal.fire({
@@ -57,6 +59,8 @@ const LoginAdmin = ({ cambiarLogin }) => {
       });
     }
   };
+
+
 
   return (
     <div className="container">
