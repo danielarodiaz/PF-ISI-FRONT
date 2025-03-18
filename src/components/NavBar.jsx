@@ -7,7 +7,7 @@ import "../css/navbar.css";
 const NavBar = ({ cambiarLogin }) => {
   const location = useLocation();
 
-  const adminRoutes = ["/homeAdmin"];
+  const adminRoutes = ["/homeAdmin", "/reportes"];
   const isAdminPage = adminRoutes.includes(location.pathname);
   const loginRoutes = ["/loginAdmin"];
   const isLoginAdmin = loginRoutes.includes(location.pathname);
@@ -68,8 +68,13 @@ const NavBar = ({ cambiarLogin }) => {
                     </NavLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/homeAdmin">
+                    <NavLink className="nav-link" to="/reportes">
                       Generar Reportes
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavLink className="nav-link" to="/homeAdmin">
+                      Gestionar Turnos
                     </NavLink>
                   </li>
                   <li>
