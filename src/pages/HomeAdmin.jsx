@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import TableFila from "../components/TableFila";
 import CardFilaNow from "../components/CardFilaNow";
-import { getFila } from "../data/dataFila"; // Importamos los datos de fila
+import { getFila } from "../helpers/filaApi"; // Importamos los datos de fila
 import { atenderTurnoConId, putFinalizarAtencion } from "../helpers/filaApi"; // Importamos la función para atender un turno
 import { postTurnoEnFila } from "../helpers/filaApi"; // Importamos la función para agregar un turno a la fila
 import { useNavigate } from "react-router-dom";

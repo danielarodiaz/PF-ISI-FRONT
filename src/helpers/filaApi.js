@@ -3,9 +3,31 @@ import axios from "axios";
 //const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
 const API_BASE_URL = "http://localhost:5132";
 
+
+export const getFila = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(`${API_BASE_URL}/api/Fila/ObtenerFila`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching fila:", error);
+    throw error;
+  }
+};
+
+
 export const getTurnos = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/turnos`);
+    const token = localStorage.getItem("token");
+    const response = await axios.get(`${API_BASE_URL}/turnos` , {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error("Error fetching turnos:", error);
@@ -15,8 +37,13 @@ export const getTurnos = async () => {
 
 export const getTurnoById = async (idTurno) => {
   try {
+    const token = localStorage.getItem("token");
     const response = await axios.get(`${API_BASE_URL}/api/Turno/ObtenerTurnoByID`, {
       params: { idTurno: idTurno }
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
     return response.data;
   } catch (error) {
@@ -107,8 +134,14 @@ export const atenderTurnoConId = async (idTurno) => {
   }
 
   try {
+    const token = localStorage.getItem("token");
+    console.log("Token:", token);
     const url = `${API_BASE_URL}/api/Fila/${idTurno}/atender`;
-    const response = await axios.put(url);
+    const response = await axios.put(url, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -117,7 +150,12 @@ export const atenderTurnoConId = async (idTurno) => {
 
 export const putFinalizarAtencion = async () => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/api/fila/finalizaratencion`);
+    const token = localStorage.getItem("token");
+    const response = await axios.put(`${API_BASE_URL}/api/fila/finalizaratencion`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
     return response.data;
   } catch (error) {
     console.error("Error fetching put finalizar atencion:", error);

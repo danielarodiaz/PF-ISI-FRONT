@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 import "../css/login.css";
 import { getToken } from "../helpers/login"; // Import the getToken function
+
 const LoginAdmin = ({ cambiarLogin }) => {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [formValues, setFormValues] = useState({
     user: "",
@@ -24,9 +26,9 @@ const LoginAdmin = ({ cambiarLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     const { user, password } = formValues;
-
+  
     if (!user || !password) {
       setShow({
         user: !user,
@@ -34,14 +36,13 @@ const LoginAdmin = ({ cambiarLogin }) => {
       });
       return;
     }
-
+  
     try {
       const token = await getToken(user, password);
       if (token) {
-        cambiarLogin();
         localStorage.setItem("token", token.token);
-        //console.log("Token seteado en localStorage:", token);
-        navigate("/homeAdmin");
+        cambiarLogin(); // This updates the login state in the parent component
+        setIsLoggedIn(true); // Set local state to trigger the useEffect
       } else {
         Swal.fire({
           icon: "error",
@@ -52,15 +53,37 @@ const LoginAdmin = ({ cambiarLogin }) => {
         });
       }
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Hubo un problema al iniciar sesión. Inténtalo de nuevo más tarde.",
-      });
+      if (error.response && error.response.status === 401) {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Usuario o contraseña incorrectos",
+          footer:
+            '<a href="#">Te olvidaste tu usuario y/o contraseña? Recuperar aquí</a>',
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Hubo un problema al iniciar sesión. Inténtalo de nuevo más tarde.",
+        });
+      }
     }
   };
 
-
+  // This effect will run when isLoggedIn changes to true
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/homeAdmin");
+    }
+  }, [isLoggedIn, navigate]);
+  
+  // Optional: Check on mount if we already have a token
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   return (
     <div className="container">
