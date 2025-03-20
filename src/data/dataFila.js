@@ -2,15 +2,7 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:5132";
 
-export const getFila = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/api/Fila/ObtenerFila`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching fila:", error);
-    throw error;
-  }
-};
+
 
 
 export const initializeDatabase = () => {
