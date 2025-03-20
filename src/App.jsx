@@ -20,34 +20,35 @@ import { verificarToken } from "./helpers/login"; // Asegúrate de que existe es
 
 function App() {
   const [login, setLogin] = useState(!!localStorage.getItem("token")); // Si hay token, login es true
-
-useEffect(() => {
-  const checkToken = async () => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const valido = await verificarToken(token);
-        setLogin(valido);
-        // If token is invalid, remove it
-        if (!valido) {
-          localStorage.removeItem("token");
-        }
-      } catch (error) {
-        console.error("Error verifying token:", error);
-        localStorage.removeItem("token");
-        setLogin(false);
-      }
-    }
-  };
-  checkToken();
-}, []);
-
+  
   const cambiarLogin = () => {
     if (login) {
       localStorage.removeItem("token"); // Si está logueado y cierra sesión, borra el token
     }
     setLogin(!login);
   };
+  
+  // useEffect(() => {
+    //   const checkToken = async () => {
+//     const token = localStorage.getItem("token");
+//     if (token) {
+//       try {
+//         const valido = await verificarToken(token);
+//         setLogin(valido);
+//         // If token is invalid, remove it
+//         if (!valido) {
+//           localStorage.removeItem("token");
+//         }
+//       } catch (error) {
+//         console.error("Error verifying token:", error);
+//         localStorage.removeItem("token");
+//         setLogin(false);
+//       }
+//     }
+//   };
+//   checkToken();
+// }, []);
+
 
   return (
     <>
