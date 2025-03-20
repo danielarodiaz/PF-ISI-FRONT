@@ -58,6 +58,8 @@ const HomeAdmin = () => {
   // Llamamos a verificarYFetchFila cuando el componente se monta
   useEffect(() => {
     fetchFila();
+    const interval = setInterval(fetchFila, 5000); // Refresca cada 5 segundos
+    return () => clearInterval(interval); // Limpia el intervalo al desmontar el componente
   }, []); // Dependency array to run only once
 
   // Función para seleccionar un turno y empezar la atención

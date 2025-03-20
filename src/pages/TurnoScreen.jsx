@@ -84,25 +84,17 @@ const TurnoPage = () => {
     if (idTurno) {
       console.log("idTurno:", idTurno);
       obtenerTurno(idTurno);
-    }
-    else{
+    } else {
       console.log("no valid idTurno:", idTurno);
     }
 
-    // const filaUsuarios = JSON.parse(localStorage.getItem("filaUsuarios")) || [];
-    // const ultimoTurno = filaUsuarios[0]; // Selecciona el último registro
-    // console.log("ultimo turno:", ultimoTurno);
-    // if (ultimoTurno) {
-    //   setDatosTurno({
-    //     legajo: ultimoTurno.legajo,
-    //     tramite: ultimoTurno.tramite,
-    //     nombreTurno: ultimoTurno.NombreTurno,
-    //     idEstadoTurno: ultimoTurno.idEstadoTurno
-    //   });
+    const interval = setInterval(() => {
+      if (idTurno) {
+        obtenerTurno(idTurno);
+      }
+    }, 5000);
 
-      //obtenerTurno(ultimoTurno.idTurno);
-      
-    // }
+    return () => clearInterval(interval);
   }, [idTurno]);
 
   return (
