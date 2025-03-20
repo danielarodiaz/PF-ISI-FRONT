@@ -39,11 +39,17 @@ const LoginAdmin = ({ cambiarLogin }) => {
   
     try {
       const token = await getToken(user, password);
+      console.log("flujo 1:se ejecuta antes que el token");
+      console.log("flujo 2");
+      console.log(token);
       if (token) {
+        console.log("flujo 3:Token obtenido, despues de ingresar los datos");
         localStorage.setItem("token", token.token);
-        cambiarLogin(); // This updates the login state in the parent component
-        setIsLoggedIn(true); // Set local state to trigger the useEffect
+        cambiarLogin(); 
+        navigate("/homeAdmin");
+        //setIsLoggedIn(true); 
       } else {
+        console.log("Token no obtenido, despues de ingresar los datos");
         Swal.fire({
           icon: "error",
           title: "Oops...",
@@ -71,19 +77,20 @@ const LoginAdmin = ({ cambiarLogin }) => {
     }
   };
 
-  // This effect will run when isLoggedIn changes to true
+
   useEffect(() => {
+    console.log("flujo 4:use effect");
     if (isLoggedIn) {
+      console.log("flujo 5:isloggedin true");
       navigate("/homeAdmin");
     }
   }, [isLoggedIn, navigate]);
   
-  // Optional: Check on mount if we already have a token
-  useEffect(() => {
-    if (localStorage.getItem("token")) {
-      setIsLoggedIn(true);
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (localStorage.getItem("token")) {
+  //     setIsLoggedIn(true);
+  //   }
+  // }, []);
 
   return (
     <div className="container">

@@ -7,12 +7,10 @@ import TurnosChart from "../pages/TurnosChart";
 
 const RoutesApp = () => {
   return (
-    <>
-      <Routes>
-        <Route path="/homeAdmin" element={<HomeAdmin />} />
-        <Route path="/reportes" element={<TurnosChart />} />
-      </Routes>
-    </>
+    <Routes>
+      <Route path="/homeAdmin" element={<HomeAdmin />} />
+      <Route path="/reportes" element={<TurnosChart />} />
+    </Routes>
   );
 };
 

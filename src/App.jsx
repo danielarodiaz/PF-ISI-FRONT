@@ -21,13 +21,18 @@ import { verificarToken } from "./helpers/login"; // Asegúrate de que existe es
 function App() {
   const [login, setLogin] = useState(!!localStorage.getItem("token")); // Si hay token, login es true
   
+  // const cambiarLogin = () => {
+  //   if (login) {
+  //     localStorage.removeItem("token"); // Si está logueado y cierra sesión, borra el token
+  //   }
+  //   setLogin(!login);
+  // };
+
   const cambiarLogin = () => {
-    if (login) {
-      localStorage.removeItem("token"); // Si está logueado y cierra sesión, borra el token
-    }
-    setLogin(!login);
+    const token = localStorage.getItem("token");
+    setLogin(!!token); // Actualiza el estado basado en la presencia del token
   };
-  
+
   // useEffect(() => {
     //   const checkToken = async () => {
 //     const token = localStorage.getItem("token");
