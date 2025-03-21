@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 import "../css/login.css";
-import { getToken } from "../helpers/login"; // Import the getToken function
+import { LogIn } from "../helpers/login"; // Import the getToken function
 
 const LoginAdmin = ({ cambiarLogin }) => {
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ const LoginAdmin = ({ cambiarLogin }) => {
     }
   
     try {
-      const token = await getToken(user, password);
+      const token = await LogIn(user, password);
       console.log(token);
       if (token) {
         localStorage.setItem("token", token.token);

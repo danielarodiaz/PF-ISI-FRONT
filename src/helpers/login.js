@@ -2,9 +2,9 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:5132/";
 
-export const getToken = async (user, password) => {
+export const LogIn = async (user, password) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}api/Autenticacion/Validar`, {
+        const response = await axios.post(`${API_BASE_URL}api/Autenticacion/LogIn`, {
             user: user,
             password: password
         }, {
