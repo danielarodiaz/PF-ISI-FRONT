@@ -41,13 +41,9 @@ const FilaScreen = () => {
     const selectedTramite = e.target.value;
     setTramite(selectedTramite);
 
-    console.log("Tramite seleccionado:", selectedTramite);
-  
     // Find the index of the selected tramite
     const selectedIndex = tramites.findIndex(tramite => tramite.descripcion === selectedTramite) + 1;
     setIndexTramite(selectedIndex);
-
-    console.log("Index del tramite seleccionado:", selectedIndex);
   
     // Mostrar advertencia si el trámite tiene un asterisco
     setShowWarning(selectedTramite.endsWith("*"));
@@ -59,9 +55,10 @@ const FilaScreen = () => {
 
     const sendTurno = async () => {
       try {
-      console.log("Enviando turno:", legajo, tramite);
+      //console.log("Enviando turno:", legajo, tramite);
       const turnoData = await postTurnoEnFila(legajo, indexTramite);
-      console.log("Turno enviado:", turnoData);
+      
+      //console.log("Turno enviado:", turnoData);
       navigate(`/turno/${turnoData.idTurno}`);
       } catch (error) {
       console.error("Error fetching tramites:", error);

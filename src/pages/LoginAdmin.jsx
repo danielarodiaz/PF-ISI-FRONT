@@ -39,11 +39,8 @@ const LoginAdmin = ({ cambiarLogin }) => {
   
     try {
       const token = await getToken(user, password);
-      console.log("flujo 1:se ejecuta antes que el token");
-      console.log("flujo 2");
       console.log(token);
       if (token) {
-        console.log("flujo 3:Token obtenido, despues de ingresar los datos");
         localStorage.setItem("token", token.token);
         cambiarLogin(); 
         navigate("/homeAdmin");
@@ -79,9 +76,7 @@ const LoginAdmin = ({ cambiarLogin }) => {
 
 
   useEffect(() => {
-    console.log("flujo 4:use effect");
     if (isLoggedIn) {
-      console.log("flujo 5:isloggedin true");
       navigate("/homeAdmin");
     }
   }, [isLoggedIn, navigate]);

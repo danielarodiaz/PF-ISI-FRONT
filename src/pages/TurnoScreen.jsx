@@ -24,12 +24,9 @@ const TurnoPage = () => {
   const obtenerTurno = async (idTurno) => {
     try {
       const turnoData = await getTurnoById(idTurno);
-      console.log("Turno:", turnoData);
       setDatosTurno(turnoData);
       fetchPersonasAdelante(turnoData);
       setTurnoActual(turnoData.nombreTurno); // Muestra el turno asignado
-
-      console.log("Estado del turno:", turnoData.idEstadoTurno);
       
 
     } catch (error) {
@@ -40,7 +37,6 @@ const TurnoPage = () => {
   const fetchPersonasAdelante = async (turnoData) => {
     try {
       const personasAdelanteData = await personasAdelanteEnLaFila(turnoData.idTurno);
-      console.log("Personas adelante:", personasAdelanteData);
       setPersonasAdelante(personasAdelanteData);
       calcularTiempoEspera(personasAdelanteData);
 
@@ -51,13 +47,11 @@ const TurnoPage = () => {
         navigate("/"); // Redirige a la página principal
       }
 
-      console.log("estado turnoooooo: ", turnoData.idEstadoTurno);
       if (personasAdelanteData === 0 && turnoData.idEstadoTurno == 1) {
         setPorAtender(true);
         setTurnoActual("Te están por atender");
       } else if (turnoData.idEstadoTurno == 2) {
         setEsTurno(true);
-       // setTurnoActual("¡Es tu turno!");
          setTurnoActual(`¡Es tu turno ${turnoData.nombreTurno}!`);
       }
       
@@ -82,10 +76,10 @@ const TurnoPage = () => {
   // Obtiene el último turno ingresado en filaUsuarios
   useEffect(() => {
     if (idTurno) {
-      console.log("idTurno:", idTurno);
+      //console.log("idTurno:", idTurno);
       obtenerTurno(idTurno);
     } else {
-      console.log("no valid idTurno:", idTurno);
+      //console.log("no valid idTurno:", idTurno);
     }
 
     const interval = setInterval(() => {

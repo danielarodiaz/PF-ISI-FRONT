@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { verificarToken } from "../helpers/login";
+import Swal from "sweetalert2";
 
 const ProtectedRoutes = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -21,12 +22,26 @@ const ProtectedRoutes = ({ children }) => {
         const valido = await verificarToken(token);
         
         if (!valido) {
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: "Expiro tu sesion. Vuelve a iniciar sesion para continuar",
+          }).then(() => {
+            window.location.reload();
+          });
           localStorage.removeItem("token");
           setIsAuthenticated(false);
         } else {
           setIsAuthenticated(true);
         }
       } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Expiro tu sesion. Vuelve a iniciar sesion para continuar",
+        }).then(() => {
+          window.location.reload();
+        });
         console.error("Error verifying token:", error);
         localStorage.removeItem("token");
         setIsAuthenticated(false);

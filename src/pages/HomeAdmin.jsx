@@ -6,6 +6,8 @@ import { atenderTurnoConId, putFinalizarAtencion } from "../helpers/filaApi"; //
 import { postTurnoEnFila } from "../helpers/filaApi"; // Importamos la función para agregar un turno a la fila
 import { useNavigate } from "react-router-dom";
 import { verificarToken } from "../helpers/login"; // Importamos la función para verificar el token
+import Swal from "sweetalert2";
+
 
 const HomeAdmin = () => {
   const [fila, setFila] = useState([]); // Lista de turnos
@@ -33,7 +35,14 @@ const HomeAdmin = () => {
       //console.log("Fila transformada:", filaTransformada);
       setFila(filaTransformada);
     } catch (error) {
-      console.error("Error fetching fila:", error);
+      Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: "Expiro tu sesion. Vuelve a iniciar sesion para continuar",
+              }).then(() => {
+                window.location.reload(); // Refresca la página
+              });
+      //console.error("Error fetching fila:", error);
     }
   };
 
@@ -65,7 +74,7 @@ const HomeAdmin = () => {
   // Función para seleccionar un turno y empezar la atención
   const atenderTurno = (turno) => {
     atenderTurnoConId(turno.id);
-    console.log("Atendiendo turno:", turno);
+    //console.log("Atendiendo turno:", turno);
     setTurnoActual(turno);
     setAtendiendo(true);
     setSegundos(60); // Iniciamos el cronómetro en 60 segundos

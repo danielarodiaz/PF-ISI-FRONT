@@ -69,7 +69,7 @@ const NavBar = ({ cambiarLogin }) => {
                   </li>
                   <li className="nav-item">
                     <NavLink className="nav-link" to="/reportes">
-                      Generar Reportes
+                      Estadísticas
                     </NavLink>
                   </li>
                   <li className="nav-item">

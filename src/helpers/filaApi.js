@@ -113,13 +113,13 @@ export const personasAdelanteEnLaFila = async (idTurno) => {
 
   try {
     const url = `${API_BASE_URL}/api/Fila/ObtenerCantidadDePersonasAdelante`;
-    console.log("Request URL:", url);
-    console.log("Request Params:", { idTurno });
+    //console.log("Request URL:", url);
+    //console.log("Request Params:", { idTurno });
 
     const response = await axios.get(url, {
       params: { idTurno: idTurno }
     });
-    console.log("Response Data:", response.data);
+    //console.log("Response Data:", response.data);
 
     return response.data;
   } catch (error) {
@@ -135,7 +135,7 @@ export const atenderTurnoConId = async (idTurno) => {
 
   try {
     const token = localStorage.getItem("token");
-    console.log("Token:", token);
+    //console.log("Token:", token);
     const url = `${API_BASE_URL}/api/Fila/${idTurno}/atender`;
     const response = await axios.put(url, {}, {
       headers: {
