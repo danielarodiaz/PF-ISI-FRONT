@@ -18,19 +18,25 @@ const TurnoPage = () => {
   const [datosTurno, setDatosTurno] = useState({ legajo: 0, tramite: "", NombreTurno: "" });
   const [totalPersonas, setTotalPersonas] = useState(0);
   const [porAtender, setPorAtender] = useState(false);
-  const { idTurno } = useParams();
+  //const { idTurno } = useParams();
 
+
+  
 
   const obtenerTurno = async (idTurno) => {
     try {
-      const turnoData = await getTurnoById(idTurno);
-      setDatosTurno(turnoData);
-      fetchPersonasAdelante(turnoData);
-      setTurnoActual(turnoData.nombreTurno); // Muestra el turno asignado
+      let turnoData = sessionStorage.getItem(`turno_${idTurno}`);
       
 
+      turnoData = await getTurnoById(idTurno);
+      sessionStorage.setItem(`turno_${idTurno}`, JSON.stringify(turnoData)); // Guardar en sessionStorage si no estaba
+    
+  
+      setDatosTurno(turnoData);
+      fetchPersonasAdelante(turnoData);
+      setTurnoActual(turnoData.nombreTurno);
     } catch (error) {
-      console.error("Error fetching turno:", error);
+      console.error("Error obteniendo turno:", error);
     }
   };
 
@@ -75,21 +81,24 @@ const TurnoPage = () => {
 
   // Obtiene el último turno ingresado en filaUsuarios
   useEffect(() => {
-    if (idTurno) {
-      //console.log("idTurno:", idTurno);
-      obtenerTurno(idTurno);
+    const turnoGuardado = sessionStorage.getItem("turnoActivo");
+  
+    if (turnoGuardado) {
+      const turnoData = JSON.parse(turnoGuardado);
+      obtenerTurno(turnoData.idTurno); // Cargar los datos del turno
     } else {
-      //console.log("no valid idTurno:", idTurno);
+      navigate("/"); // Si no hay turno en sesión, redirigir al inicio
     }
-
+  
     const interval = setInterval(() => {
-      if (idTurno) {
-        obtenerTurno(idTurno);
+      if (turnoGuardado) {
+        const turnoData = JSON.parse(turnoGuardado);
+        obtenerTurno(turnoData.idTurno);
       }
     }, 5000);
-
+  
     return () => clearInterval(interval);
-  }, [idTurno]);
+  }, []);
 
   return (
     <div className="container text-center mt-1">
@@ -177,9 +186,7 @@ const TurnoPage = () => {
             type="button"
             className="btn btn-danger w-50 mb-3"
             onClick={() => {
-              localStorage.removeItem("legajo");
-              localStorage.removeItem("tramite");
-              localStorage.removeItem("filaUsuarios");
+              sessionStorage.removeItem(`turno_${idTurno}`); // Eliminar solo el turno actual
               navigate("/");
             }}
           >

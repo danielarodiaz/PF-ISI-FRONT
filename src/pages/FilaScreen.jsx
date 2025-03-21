@@ -52,21 +52,19 @@ const FilaScreen = () => {
   // Manejar el envío del formulario--------------------------------------------------------
   const handleSubmit = (e) => {
     e.preventDefault();
-
+  
     const sendTurno = async () => {
       try {
-      //console.log("Enviando turno:", legajo, tramite);
-      const turnoData = await postTurnoEnFila(legajo, indexTramite);
-      
-      //console.log("Turno enviado:", turnoData);
-      navigate(`/turno/${turnoData.idTurno}`);
+        const turnoData = await postTurnoEnFila(legajo, indexTramite);
+    
+        sessionStorage.setItem("turnoActivo", JSON.stringify(turnoData));
+
+        navigate("/turno");
       } catch (error) {
-      console.error("Error fetching tramites:", error);
+        console.error("Error creando turno:", error);
       }
     };
     sendTurno();
-
-    
   };
 
 

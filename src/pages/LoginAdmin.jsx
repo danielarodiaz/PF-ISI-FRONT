@@ -43,7 +43,7 @@ const LoginAdmin = ({ cambiarLogin }) => {
       if (token) {
         localStorage.setItem("token", token.token);
         cambiarLogin(); 
-        navigate("/homeAdmin");
+        navigate("/admin/homeAdmin");
         //setIsLoggedIn(true); 
       } else {
         console.log("Token no obtenido, despues de ingresar los datos");
@@ -77,7 +77,7 @@ const LoginAdmin = ({ cambiarLogin }) => {
 
   useEffect(() => {
     if (isLoggedIn) {
-      navigate("/homeAdmin");
+      navigate("/admin/homeAdmin");
     }
   }, [isLoggedIn, navigate]);
   

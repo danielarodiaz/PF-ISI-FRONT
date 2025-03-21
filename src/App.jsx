@@ -65,18 +65,11 @@ function App() {
               <Route path="/" element={<MainScreen />} />
               <Route path="/fila" element={<FilaScreen />} />
               <Route path="/whatsapp" element={<WhatsAppScreen />} />
-              <Route path="/turno/:idTurno" element={<TurnoScreen />} />
+              <Route path="/turno" element={<TurnoScreen />} />
               {/* <Route path="/turno" element={<TurnoScreen />} /> */}
               <Route path="/chatbot" element={<ChatbotScreen />} />
               <Route path="/faq" element={<FaqScreen />} />
-              <Route
-                path="/*"
-                element={
-                  <ProtectedRoutes login={login}>
-                    <RoutesApp />
-                  </ProtectedRoutes>
-                }
-              />
+              <Route path="/admin/*" element={ <ProtectedRoutes login={login}><RoutesApp /></ProtectedRoutes> } />
               <Route
                 path="/loginAdmin"
                 element={<LoginAdmin cambiarLogin={cambiarLogin} />}

@@ -25,11 +25,12 @@ const ProtectedRoutes = ({ children }) => {
           Swal.fire({
             icon: "error",
             title: "Oops...",
-            text: "Expiro tu sesion. Vuelve a iniciar sesion para continuar",
+            text: "Expiró tu sesión. Vuelve a iniciar sesión para continuar",
           }).then(() => {
-            window.location.reload();
+            localStorage.removeItem("token");
+            navigate("/loginAdmin");
           });
-          localStorage.removeItem("token");
+          //localStorage.removeItem("token");
           setIsAuthenticated(false);
         } else {
           setIsAuthenticated(true);
@@ -38,12 +39,13 @@ const ProtectedRoutes = ({ children }) => {
         Swal.fire({
           icon: "error",
           title: "Oops...",
-          text: "Expiro tu sesion. Vuelve a iniciar sesion para continuar",
+          text: "Expiró tu sesión. Vuelve a iniciar sesión para continuar",
         }).then(() => {
-          window.location.reload();
+          localStorage.removeItem("token");
+          navigate("/loginAdmin"); // Redirigir sin recargar la página
         });
-        console.error("Error verifying token:", error);
-        localStorage.removeItem("token");
+        //console.error("Error verifying token:", error);
+        //localStorage.removeItem("token");
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
