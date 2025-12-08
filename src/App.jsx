@@ -1,85 +1,71 @@
-import { useState,useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "./context/ThemeContext";
 
-import NavBar from "./components/NavBar";
-import Footer from "./components/Footer";
-import WhatsAppScreen from "./pages/WhatsAppScreen";
+// Layouts
+import PublicLayout from "./components/layout/PublicLayout";
+
+// Paginas Publicas
+import MainScreen from "./pages/MainScreen";
 import FilaScreen from "./pages/FilaScreen";
 import TurnoScreen from "./pages/TurnoScreen";
-import MainScreen from "./pages/MainScreen";
+import ChatbotScreen from "./pages/ChatbotScreen";
+import FaqScreen from "./pages/FaqScreen";
+import WhatsAppScreen from "./pages/WhatsAppScreen";
+import LoginAdmin from "./pages/LoginAdmin";
 
+// Rutas Protegidas (Admin)
 import RoutesApp from "./routes/RoutesApp";
 import ProtectedRoutes from "./routes/ProtectedRoutes";
 
-import LoginAdmin from "./pages/LoginAdmin";
-import ChatbotScreen from "./pages/ChatbotScreen";
-import FaqScreen from "./pages/FaqScreen";
-import { verificarToken } from "./helpers/login"; // Asegúrate de que existe esta función
-
-
-
 function App() {
-  const [login, setLogin] = useState(!!localStorage.getItem("token")); // Si hay token, login es true
-  
-  // const cambiarLogin = () => {
-  //   if (login) {
-  //     localStorage.removeItem("token"); // Si está logueado y cierra sesión, borra el token
-  //   }
-  //   setLogin(!login);
-  // };
+  // Estado simple de login
+  const [login, setLogin] = useState(!!localStorage.getItem("token"));
 
   const cambiarLogin = () => {
     const token = localStorage.getItem("token");
-    setLogin(!!token); // Actualiza el estado basado en la presencia del token
+    setLogin(!!token);
   };
 
-  // useEffect(() => {
-    //   const checkToken = async () => {
-//     const token = localStorage.getItem("token");
-//     if (token) {
-//       try {
-//         const valido = await verificarToken(token);
-//         setLogin(valido);
-//         // If token is invalid, remove it
-//         if (!valido) {
-//           localStorage.removeItem("token");
-//         }
-//       } catch (error) {
-//         console.error("Error verifying token:", error);
-//         localStorage.removeItem("token");
-//         setLogin(false);
-//       }
-//     }
-//   };
-//   checkToken();
-// }, []);
-
-
   return (
-    <>
-      <div className="footer-container">
-        <BrowserRouter basename="/PF-ISI-FRONT">
-          <NavBar cambiarLogin={cambiarLogin} />
-          <div className="flex-grow-1">
-            <Routes>
-              <Route path="/" element={<MainScreen />} />
-              <Route path="/fila" element={<FilaScreen />} />
-              <Route path="/whatsapp" element={<WhatsAppScreen />} />
-              <Route path="/turno" element={<TurnoScreen />} />
-              {/* <Route path="/turno" element={<TurnoScreen />} /> */}
-              <Route path="/chatbot" element={<ChatbotScreen />} />
-              <Route path="/faq" element={<FaqScreen />} />
-              <Route path="/admin/*" element={ <ProtectedRoutes login={login}><RoutesApp /></ProtectedRoutes> } />
-              <Route
-                path="/loginAdmin"
-                element={<LoginAdmin cambiarLogin={cambiarLogin} />}
-              />
-            </Routes>
-          </div>
-          <Footer />
-        </BrowserRouter>
-      </div>
-    </>
+    <ThemeProvider>
+      <BrowserRouter basename="/PF-ISI-FRONT">
+        <Routes>
+          {/* RUTAS PÚBLICAS
+            Todas estas rutas comparten el Navbar y el fondo del PublicLayout 
+          */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<MainScreen />} />
+            <Route path="/fila" element={<FilaScreen />} />
+            <Route path="/turno" element={<TurnoScreen />} />
+            <Route path="/chatbot" element={<ChatbotScreen />} />
+            <Route path="/faq" element={<FaqScreen />} />
+            <Route path="/whatsapp" element={<WhatsAppScreen />} />
+            
+          </Route>
+
+          {/* LOGIN ADMINISTRADOR (Sin layout público) */}
+          <Route 
+            path="/loginAdmin" 
+            element={<LoginAdmin cambiarLogin={cambiarLogin} />} 
+          />
+
+          {/* RUTAS ADMINISTRADOR (Protegidas) */}
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoutes login={login}>
+                <RoutesApp />
+              </ProtectedRoutes>
+            }
+          />
+          
+          {/* Redirección por defecto a Home */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
+
 export default App;

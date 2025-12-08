@@ -1,9 +1,0 @@
-.card {
-  display: inline-block; /* Para que la tarjeta se ajuste a su contenido */
-  max-width: 300px; /* Ancho máximo para limitar el tamaño de la tarjeta */
-  margin: 0 auto; /* Para centrar la tarjeta */
-  border: 1px solid #ddd; /* Borde opcional */
-  padding: 20px; /* Espacio interno para que el contenido no quede pegado a los bordes */
-  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1); /* Sombra opcional */
-  text-align: center; /* Alineación centrada del texto */
-}
