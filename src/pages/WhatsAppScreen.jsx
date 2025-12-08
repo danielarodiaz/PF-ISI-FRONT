@@ -1,54 +1,94 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import TitleFv from "../components/TitleFv";
+import { MessageCircle, Phone, CheckCircle, XCircle } from "lucide-react";
+import PageLayout from "../components/layout/PageLayout";
 
 const WhatsAppScreen = () => {
   const navigate = useNavigate();
+  const [telefono, setTelefono] = useState("");
 
-  const handleClick = () => {
+  const handleContinue = (acepta) => {
+    if (acepta && telefono) {
+        console.log("Registrando teléfono:", telefono);
+        // postTelefono(telefono)... 
+    }
     navigate("/turno");
   };
+
   return (
-    <div className="container">
-      <div className="row mt-3">
-        <TitleFv />
-      </div>
-      <div className="col">
-        <div className="col text-center">
-          <h4 className="py-4">
-            ¿Deseas recibir una notificación vía Whatsapp cuando sea tu turno?
-          </h4>
-        </div>
-        <div className="col col-md-6 offset-md-3">
-          <form onSubmit="">
-            <div className="mb-3 d-grid">
-              <label>Ingrese su número de teléfono</label>
-              <input
-                type="number"
-                className="form-control"
-                placeholder="Número de teléfono: 3815789536"
-                name="telefono"
-              />
+    <PageLayout title="Notificaciones">
+      <div className="max-w-md mx-auto">
+        {/* 1. CONTENEDOR TARJETA:
+            - dark:bg-slate-900: Fondo oscuro.
+            - dark:border-slate-800: Borde sutil.
+        */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-8 text-center relative overflow-hidden transition-colors duration-300">
+            
+            {/* Decoración de fondo (Barra superior) */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-green-600"></div>
+
+            {/* Icono Principal (Círculo de fondo) */}
+            <div className="mx-auto w-20 h-20 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-6 shadow-sm transition-colors">
+                <MessageCircle className="w-10 h-10 text-green-600 dark:text-green-500" />
             </div>
-            <div className="mb-3 d-flex justify-content-center">
-              <button
-                className="btn btn-success w-50 mx-2 "
-                onClick={handleClick}
-              >
-                SÍ
-              </button>
-              <button
-                className="btn btn-danger w-50 mx-2"
-                onClick={handleClick}
-              >
-                NO
-              </button>
+
+            {/* Título y Texto */}
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-3">
+                ¿Te avisamos por WhatsApp?
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                Podemos enviarte una alerta cuando sea tu turno para que no tengas que esperar mirando la pantalla.
+            </p>
+
+            <div className="space-y-5 text-left">
+                <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 ml-1">
+                        Número de celular
+                    </label>
+                    <div className="relative group">
+                        <Phone className="absolute left-3 top-3.5 w-5 h-5 text-slate-400 group-focus-within:text-green-500 transition-colors" />
+                        {/* 2. INPUT:
+                            - dark:bg-slate-800: Fondo del input oscuro.
+                            - dark:text-white: Letra blanca al escribir.
+                        */}
+                        <input
+                            type="number"
+                            className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all placeholder:text-slate-400"
+                            placeholder="Ej: 3815789536"
+                            value={telefono}
+                            onChange={(e) => setTelefono(e.target.value)}
+                        />
+                    </div>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 ml-1">
+                        *No enviaremos spam, solo la notificación de tu turno.
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                     {/* Botón NO */}
+                     <button
+                        onClick={() => handleContinue(false)}
+                        className="flex items-center justify-center gap-2 py-3 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl transition-all active:scale-95"
+                    >
+                        <XCircle size={18} />
+                        No, gracias
+                    </button>
+                    
+                    {/* Botón SI */}
+                    <button
+                        onClick={() => handleContinue(true)}
+                        disabled={!telefono} 
+                        className="flex items-center justify-center gap-2 py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-green-200 dark:shadow-none transition-all hover:-translate-y-1 active:scale-95"
+                    >
+                        <CheckCircle size={18} />
+                        Sí, avísame
+                    </button>
+                </div>
             </div>
-          </form>
+
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 
