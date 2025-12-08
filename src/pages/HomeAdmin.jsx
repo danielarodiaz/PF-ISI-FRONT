@@ -1,28 +1,22 @@
 import React, { useState, useEffect } from "react";
 import TableFila from "../components/TableFila";
-import CardFilaNow from "../components/CardFilaNow";
-import { getFila } from "../helpers/filaApi"; // Importamos los datos de fila
-import { atenderTurnoConId, putFinalizarAtencion } from "../helpers/filaApi"; // Importamos la función para atender un turno
-import { postTurnoEnFila } from "../helpers/filaApi"; // Importamos la función para agregar un turno a la fila
+// import CardFilaNow from "../components/CardFilaNow"; // Ya no se usa explícitamente aquí, lo hiciste inline
+import { getFila, atenderTurnoConId, putFinalizarAtencion } from "../helpers/filaApi";
 import { useNavigate } from "react-router-dom";
-import { verificarToken } from "../helpers/login"; // Importamos la función para verificar el token
+import { verificarToken } from "../helpers/login";
 import Swal from "sweetalert2";
-
+import { RefreshCw, CheckSquare } from "lucide-react";
 
 const HomeAdmin = () => {
-  const [fila, setFila] = useState([]); // Lista de turnos
-  const [turnoActual, setTurnoActual] = useState(null); // Turno en atención
-  const [atendiendo, setAtendiendo] = useState(false); // Estado de atención
-  const [segundos, setSegundos] = useState(0); // Cronómetro en segundos
-  const navigate = useNavigate(); // Hook para manejar la redirección
+  const [fila, setFila] = useState([]);
+  const [turnoActual, setTurnoActual] = useState(null);
+  const [atendiendo, setAtendiendo] = useState(false);
+  // const [segundos, setSegundos] = useState(0); // No se usa en el render, se puede omitir si quieres limpiar
+  const navigate = useNavigate();
 
-  // Función para obtener y transformar los datos de la API
   const fetchFila = async () => {
     try {
       const filaDb = await getFila();
-      //console.log("Fila original desde API:", filaDb);
-
-      // Transformamos los datos para extraer solo la información relevante
       const filaTransformada = filaDb.map((item) => ({
         id: item.idTurno,
         legajo: item.turno.legajo,
@@ -31,110 +25,108 @@ const HomeAdmin = () => {
         turno: item.turno.nombreTurno,
         atendido: item.turno.estadoTurno.descripcion === "Atendido",
       }));
-
-      //console.log("Fila transformada:", filaTransformada);
       setFila(filaTransformada);
     } catch (error) {
       Swal.fire({
-                icon: "error",
-                title: "Oops...",
-                text: "Expiro tu sesion. Vuelve a iniciar sesion para continuar",
-              }).then(() => {
-                window.location.reload(); // Refresca la página
-              });
-      //console.error("Error fetching fila:", error);
+        icon: "error",
+        title: "Sesión Expirada",
+        text: "Vuelve a iniciar sesión.",
+      }).then(() => window.location.reload());
     }
   };
 
-  const verificarYFetchFila = async () => {
-    try {
-      const tokenLocalStorage = localStorage.getItem("token");
-      const tokenValido = await verificarToken(tokenLocalStorage);
-      console.log("Token válido:", tokenValido);
-      if (!tokenValido) {
-        navigate("/loginadmin"); // Redirige a LoginAdmin si el token no es válido
-      } else {
-        console.log("Token válido, obteniendo datos de la fila...");
-        navigate("/homeAdmin"); // Redirige a HomeAdmin si el token es válido
-        fetchFila(); // Obtiene los datos si el token es válido
-      }
-    } catch (error) {
-      console.error("Error verifying token:", error);
-      navigate("/loginadmin"); // Redirige a LoginAdmin en caso de error
-    }
-  };
-
-  // Llamamos a verificarYFetchFila cuando el componente se monta
   useEffect(() => {
     fetchFila();
-    const interval = setInterval(fetchFila, 5000); // Refresca cada 5 segundos
-    return () => clearInterval(interval); // Limpia el intervalo al desmontar el componente
-  }, []); // Dependency array to run only once
+    const interval = setInterval(fetchFila, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Función para seleccionar un turno y empezar la atención
   const atenderTurno = (turno) => {
     atenderTurnoConId(turno.id);
-    //console.log("Atendiendo turno:", turno);
     setTurnoActual(turno);
     setAtendiendo(true);
-    setSegundos(60); // Iniciamos el cronómetro en 60 segundos
+    // setSegundos(60); 
   };
 
-  // Función para finalizar la atención
   const finalizarAtencion = () => {
     if (turnoActual) {
-      // Actualizamos solo el turno atendido en el estado
-      const nuevaFila = fila.map((t) =>
-        t.id === turnoActual.id ? { ...t, atendido: true } : t
-      );
-      putFinalizarAtencion(); // Enviamos la petición a la API
-      setFila(nuevaFila); // Actualizamos la fila
-      setAtendiendo(false); // Detenemos la atención
-      setTurnoActual(null); // Reseteamos el turno actual
-      setSegundos(0); // Reiniciamos el cronómetro
+      const nuevaFila = fila.map((t) => t.id === turnoActual.id ? { ...t, atendido: true } : t);
+      putFinalizarAtencion();
+      setFila(nuevaFila);
+      setAtendiendo(false);
+      setTurnoActual(null);
+      // setSegundos(0);
     }
   };
 
   return (
-    <div className="container">
-      <div className="row mt-3">
-        <div className="col text-center">
-          <h2 className="color-title">Gestionar Fila Virtual</h2>
+    // 1. FONDO GENERAL: dark:bg-slate-950
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
+      
+      {/* 2. HEADER: Fondo blanco -> Fondo oscuro, Borde sutil, Texto blanco */}
+      <header className="flex justify-between items-center mb-8 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Panel de Administración</h2>
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+          <RefreshCw size={16} className="animate-spin-slow" /> Actualización automática
         </div>
-      </div>
+      </header>
 
-      {/* Muestra el turno actual en atención */}
-      <div className="row mt-2">
-        <div className="col text-center">
-          {turnoActual && (
-            <CardFilaNow
-              turnoData={{
-                legajo: turnoActual.legajo,
-                tramite: turnoActual.tramite,
-                fecha: turnoActual.fecha,
-                turno: turnoActual.turno
-              }}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Botón para finalizar la atención */}
-      {atendiendo && (
-        <div className="row mt-3">
-          <div className="col text-center">
-            <button className="btn btn-success" onClick={finalizarAtencion}>
-              Finalizar Atención
-            </button>
+      <div className="grid lg:grid-cols-3 gap-8">
+        
+        {/* Columna Izquierda: Acción Actual */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* 3. CARD DE ACCIÓN: Fondo oscuro */}
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-blue-100 dark:border-slate-800 transition-colors">
+            <h3 className="text-lg font-semibold text-slate-700 dark:text-white mb-4 border-b dark:border-slate-800 pb-2">
+                En Atención
+            </h3>
+            
+            {turnoActual ? (
+              <div className="text-center">
+                {/* 4. TARJETA INTERNA (Turno activo): 
+                    - dark:bg-blue-900/20: Fondo azul transparente oscuro
+                    - Textos adaptados a claro
+                */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl mb-4 transition-colors">
+                    <h1 className="text-5xl font-black text-blue-600 dark:text-blue-400 mb-2">{turnoActual.turno}</h1>
+                    <p className="text-slate-600 dark:text-slate-300 font-medium">{turnoActual.tramite}</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500">Legajo: {turnoActual.legajo}</p>
+                </div>
+                
+                {atendiendo && (
+                  <button 
+                    onClick={finalizarAtencion}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-md shadow-green-200 dark:shadow-none transition-all"
+                  >
+                    <CheckSquare size={20} /> Finalizar Atención
+                  </button>
+                )}
+              </div>
+            ) : (
+              // 5. ESTADO VACÍO (Placeholder): Fondo y bordes oscuros
+              <div className="py-12 text-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                <p>No hay turno seleccionado</p>
+                <p className="text-xs mt-2">Selecciona uno de la lista</p>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Tabla con los turnos en la fila */}
-      <div className="row mt-5">
-        <div className="col text-center">
-          <TableFila fila={fila} onAtenderTurno={atenderTurno} />
+        {/* Columna Derecha: Tabla de Fila */}
+        <div className="lg:col-span-2">
+           {/* 6. CONTENEDOR TABLA: Fondo oscuro */}
+           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                  <h3 className="font-semibold text-slate-700 dark:text-slate-200">Fila de Espera</h3>
+              </div>
+              
+              <div className="p-0 overflow-x-auto">
+                 {/* TableFila ya tiene su propia lógica dark: implementada, así que aquí solo la llamamos */}
+                 <TableFila fila={fila} onAtenderTurno={atenderTurno} />
+              </div>
+           </div>
         </div>
+
       </div>
     </div>
   );
