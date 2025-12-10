@@ -15,10 +15,12 @@ const TurnoPage = () => {
   const [datosTurno, setDatosTurno] = useState({ legajo: 0, tramite: "", NombreTurno: "" });
   const [porAtender, setPorAtender] = useState(false);
 
+  // ... (función obtenerTurno igual que antes)
   const obtenerTurno = async (idTurno) => {
     try {
       let turnoData = await getTurnoById(idTurno);
-      sessionStorage.setItem(`turno_${idTurno}`, JSON.stringify(turnoData));
+      // No guardamos en session storage aquí para evitar re-escrituras innecesarias si ya vamos a salir
+      // sessionStorage.setItem(`turno_${idTurno}`, JSON.stringify(turnoData)); 
       
       setDatosTurno(turnoData);
       fetchPersonasAdelante(turnoData);
@@ -35,7 +37,15 @@ const TurnoPage = () => {
       setTiempoEspera(personas * 3);
       setProgreso((( (personas + 1) - personas) / (personas + 1)) * 100);
 
-      if(turnoData.idEstadoTurno == 3) navigate("/");
+      // --- CORRECCIÓN AQUÍ ---
+      // Si el turno finalizó (estado 3), limpiamos el storage ANTES de navegar
+      if(turnoData.idEstadoTurno == 3) {
+        sessionStorage.removeItem("turnoActivo"); // <--- IMPORTANTE: Borrar la clave principal
+        sessionStorage.removeItem(`turno_${turnoData.idTurno}`); // Limpieza extra
+        navigate("/");
+        return; // Detenemos la ejecución
+      }
+      // -----------------------
 
       if (personas === 0 && turnoData.idEstadoTurno == 1) {
         setPorAtender(true);
@@ -67,11 +77,21 @@ const TurnoPage = () => {
     return "bg-blue-600 shadow-blue-200 dark:shadow-none";
   };
 
+  // Función para cancelar manualmente
+  const handleCancel = () => {
+    // --- CORRECCIÓN AQUÍ TAMBIÉN ---
+    sessionStorage.removeItem("turnoActivo"); // Borrar la clave que mira el MainScreen
+    if (datosTurno?.idTurno) {
+        sessionStorage.removeItem(`turno_${datosTurno.idTurno}`);
+    }
+    navigate("/");
+  };
+
   return (
     <PageLayout title={`Legajo: ${datosTurno.legajo}`}>
       <div className="max-w-2xl mx-auto text-center space-y-8">
         
-        {/* Card Principal del Turno */}
+        {/* Card Principal */}
         <div className={`transform transition-all duration-500 hover:scale-105 rounded-3xl p-8 shadow-2xl text-white ${getStatusColor()}`}>
           <h2 className="text-xl opacity-90 mb-2 font-medium">Tu número es</h2>
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter drop-shadow-lg">
@@ -84,16 +104,14 @@ const TurnoPage = () => {
           )}
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid (Igual que antes) */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Card Personas */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 flex flex-col items-center transition-colors">
             <Users className="w-8 h-8 text-blue-500 dark:text-blue-400 mb-2" />
             <span className="text-3xl font-bold text-slate-800 dark:text-white">{personasAdelante}</span>
             <span className="text-sm text-slate-500 dark:text-slate-400">Personas adelante</span>
           </div>
 
-          {/* Card Tiempo */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 flex flex-col items-center transition-colors">
             <Clock className="w-8 h-8 text-orange-500 dark:text-orange-400 mb-2" />
             <span className="text-3xl font-bold text-slate-800 dark:text-white">{tiempoEspera}m</span>
@@ -101,14 +119,13 @@ const TurnoPage = () => {
           </div>
         </div>
 
-        {/* Progreso */}
+        {/* Progreso (Igual que antes) */}
         {!esTurno && (
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 transition-colors">
             <div className="flex justify-between mb-2">
               <h5 className="font-semibold text-slate-700 dark:text-white">Progreso en la fila</h5>
               <span className="text-blue-600 dark:text-blue-400 font-bold">{Math.round(progreso)}%</span>
             </div>
-            {/* Barra de fondo */}
             <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4 overflow-hidden">
               <div 
                 className="bg-blue-600 dark:bg-blue-500 h-4 rounded-full transition-all duration-1000 ease-out" 
@@ -120,12 +137,9 @@ const TurnoPage = () => {
           </div>
         )}
 
-        {/* Botón Cancelar */}
+        {/* Botón Cancelar corregido */}
         <button
-          onClick={() => {
-            sessionStorage.removeItem(`turno_${datosTurno.idTurno}`);
-            navigate("/");
-          }}
+          onClick={handleCancel}
           className="group flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 mx-auto bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/10 dark:hover:bg-red-900/30 dark:text-red-400 dark:border-red-900/50 font-semibold rounded-xl transition-all"
         >
           <LogOut size={18} />

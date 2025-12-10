@@ -13,6 +13,9 @@ import ChatbotScreen from "./pages/ChatbotScreen";
 import FaqScreen from "./pages/FaqScreen";
 import WhatsAppScreen from "./pages/WhatsAppScreen";
 import LoginAdmin from "./pages/LoginAdmin";
+import DashboardMetrics from "./pages/DashboardMetrics";
+import FaqsAdmin from "./pages/FaqsAdmin";
+
 
 // Rutas Protegidas (Admin)
 import RoutesApp from "./routes/RoutesApp";
@@ -41,6 +44,9 @@ function App() {
             <Route path="/chatbot" element={<ChatbotScreen />} />
             <Route path="/faq" element={<FaqScreen />} />
             <Route path="/whatsapp" element={<WhatsAppScreen />} />
+            <Route path="/admin/dashboard" element={<DashboardMetrics />} />
+            <Route path="/admin/faqs" element={<FaqsAdmin />} />
+
             
           </Route>
 

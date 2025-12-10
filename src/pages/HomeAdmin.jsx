@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from "react";
 import TableFila from "../components/TableFila";
-// import CardFilaNow from "../components/CardFilaNow"; // Ya no se usa explícitamente aquí, lo hiciste inline
 import { getFila, atenderTurnoConId, putFinalizarAtencion } from "../helpers/filaApi";
 import { useNavigate } from "react-router-dom";
-import { verificarToken } from "../helpers/login";
 import Swal from "sweetalert2";
-import { RefreshCw, CheckSquare } from "lucide-react";
+import { 
+  RefreshCw, 
+  CheckSquare, 
+  LogOut, 
+  BarChart2, 
+  MessageCircleQuestion 
+} from "lucide-react";
 
 const HomeAdmin = () => {
   const [fila, setFila] = useState([]);
   const [turnoActual, setTurnoActual] = useState(null);
   const [atendiendo, setAtendiendo] = useState(false);
-  // const [segundos, setSegundos] = useState(0); // No se usa en el render, se puede omitir si quieres limpiar
   const navigate = useNavigate();
 
+  // --- LÓGICA DE DATOS ---
   const fetchFila = async () => {
     try {
       const filaDb = await getFila();
@@ -27,11 +31,7 @@ const HomeAdmin = () => {
       }));
       setFila(filaTransformada);
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Sesión Expirada",
-        text: "Vuelve a iniciar sesión.",
-      }).then(() => window.location.reload());
+      console.error(error);
     }
   };
 
@@ -41,11 +41,11 @@ const HomeAdmin = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // --- ACCIONES ---
   const atenderTurno = (turno) => {
     atenderTurnoConId(turno.id);
     setTurnoActual(turno);
     setAtendiendo(true);
-    // setSegundos(60); 
   };
 
   const finalizarAtencion = () => {
@@ -55,73 +55,126 @@ const HomeAdmin = () => {
       setFila(nuevaFila);
       setAtendiendo(false);
       setTurnoActual(null);
-      // setSegundos(0);
     }
   };
 
+  const handleLogout = () => {
+    Swal.fire({
+      title: '¿Cerrar sesión?',
+      text: "Tendrás que ingresar tus credenciales nuevamente.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, salir',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b', 
+      color: '#fff'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem("token");
+        navigate("/loginadmin");
+      }
+    });
+  };
+
   return (
-    // 1. FONDO GENERAL: dark:bg-slate-950
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
       
-      {/* 2. HEADER: Fondo blanco -> Fondo oscuro, Borde sutil, Texto blanco */}
-      <header className="flex justify-between items-center mb-8 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Panel de Administración</h2>
-        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-          <RefreshCw size={16} className="animate-spin-slow" /> Actualización automática
+      {/* HEADER: Título y Acciones */}
+      <header className="flex flex-col xl:flex-row justify-between items-center mb-8 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors gap-4">
+        
+        {/* Título e Info */}
+        <div className="w-full xl:w-auto">
+           <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Panel de Administración</h2>
+           <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-1">
+             <RefreshCw size={14} className="animate-spin-slow" /> Actualización en tiempo real
+           </p>
+        </div>
+        
+        {/* Barra de Herramientas (Botones) */}
+        <div className="flex flex-wrap items-center justify-end gap-3 w-full xl:w-auto">
+            
+            {/* Botón Reportes */}
+            <button 
+                onClick={() => navigate("/admin/dashboard")}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 rounded-lg font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors border border-blue-100 dark:border-blue-900/50"
+            >
+                <BarChart2 size={18} />
+                Ver Reportes
+            </button>
+
+            {/* Botón FAQs (Nuevo) */}
+            <button 
+                onClick={() => navigate("/admin/faqs")} // Asumimos esta ruta para el futuro
+                className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 rounded-lg font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors border border-purple-100 dark:border-purple-900/50"
+            >
+                <MessageCircleQuestion size={18} />
+                Gestionar FAQs
+            </button>
+
+            {/* Separador vertical (solo visible en desktop) */}
+            <div className="hidden xl:block w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+
+            {/* Botón Logout */}
+            <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-lg transition-all border border-red-200 dark:border-red-900/50"
+            >
+                <LogOut size={18} />
+                Salir
+            </button>
         </div>
       </header>
 
       <div className="grid lg:grid-cols-3 gap-8">
         
-        {/* Columna Izquierda: Acción Actual */}
+        {/* COLUMNA IZQUIERDA: Acción Actual */}
         <div className="lg:col-span-1 space-y-6">
-          {/* 3. CARD DE ACCIÓN: Fondo oscuro */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-blue-100 dark:border-slate-800 transition-colors">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-blue-100 dark:border-slate-800 transition-colors h-full">
             <h3 className="text-lg font-semibold text-slate-700 dark:text-white mb-4 border-b dark:border-slate-800 pb-2">
                 En Atención
             </h3>
             
             {turnoActual ? (
-              <div className="text-center">
-                {/* 4. TARJETA INTERNA (Turno activo): 
-                    - dark:bg-blue-900/20: Fondo azul transparente oscuro
-                    - Textos adaptados a claro
-                */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl mb-4 transition-colors">
-                    <h1 className="text-5xl font-black text-blue-600 dark:text-blue-400 mb-2">{turnoActual.turno}</h1>
-                    <p className="text-slate-600 dark:text-slate-300 font-medium">{turnoActual.tramite}</p>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">Legajo: {turnoActual.legajo}</p>
+              <div className="text-center animate-in fade-in zoom-in duration-300">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl mb-6 transition-colors border border-blue-100 dark:border-blue-900/50">
+                    <p className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-2">Llamando a</p>
+                    <h1 className="text-6xl font-black text-blue-600 dark:text-blue-400 mb-2">{turnoActual.turno}</h1>
+                    <p className="text-slate-800 dark:text-white font-bold text-lg">{turnoActual.tramite}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Legajo: {turnoActual.legajo}</p>
                 </div>
                 
                 {atendiendo && (
                   <button 
                     onClick={finalizarAtencion}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-md shadow-green-200 dark:shadow-none transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-200 dark:shadow-none transition-all hover:scale-[1.02] active:scale-95"
                   >
                     <CheckSquare size={20} /> Finalizar Atención
                   </button>
                 )}
               </div>
             ) : (
-              // 5. ESTADO VACÍO (Placeholder): Fondo y bordes oscuros
-              <div className="py-12 text-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-                <p>No hay turno seleccionado</p>
-                <p className="text-xs mt-2">Selecciona uno de la lista</p>
+              <div className="h-64 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+                <CheckSquare size={40} className="mb-3 opacity-50" />
+                <p className="font-medium">Puesto Libre</p>
+                <p className="text-xs mt-1">Selecciona un usuario de la lista</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Columna Derecha: Tabla de Fila */}
+        {/* COLUMNA DERECHA: Tabla */}
         <div className="lg:col-span-2">
-           {/* 6. CONTENEDOR TABLA: Fondo oscuro */}
-           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors flex flex-col h-full">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                   <h3 className="font-semibold text-slate-700 dark:text-slate-200">Fila de Espera</h3>
+                  <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded">
+                    Total: {fila.length}
+                  </span>
               </div>
               
-              <div className="p-0 overflow-x-auto">
-                 {/* TableFila ya tiene su propia lógica dark: implementada, así que aquí solo la llamamos */}
+              <div className="p-0 overflow-x-auto flex-grow">
                  <TableFila fila={fila} onAtenderTurno={atenderTurno} />
               </div>
            </div>
