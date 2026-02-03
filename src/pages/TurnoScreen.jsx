@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { personasAdelanteEnLaFila, getTurnoById } from "../helpers/filaApi";
+import { personasAdelanteEnLaFila, getTurnoById, cancelarTurno } from "../helpers/filaApi";
 import { Users, Clock, LogOut } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";
 
@@ -78,17 +78,24 @@ const TurnoPage = () => {
   };
 
   // Función para cancelar manualmente
-  const handleCancel = () => {
-    // --- CORRECCIÓN AQUÍ TAMBIÉN ---
-    sessionStorage.removeItem("turnoActivo"); // Borrar la clave que mira el MainScreen
+  const handleCancel = async () => {
     if (datosTurno?.idTurno) {
+      try {
+        // 1. Llamar a la API para que cambie el estado en la DB a "Cancelado" (4)
+        await cancelarTurno(datosTurno.idTurno); 
+        
+        // 2. Limpiar storage y navegar
+        sessionStorage.removeItem("turnoActivo");
         sessionStorage.removeItem(`turno_${datosTurno.idTurno}`);
+        navigate("/");
+      } catch (error) {
+        console.error("Error al cancelar el turno en el servidor:", error);
+      }
     }
-    navigate("/");
   };
 
   return (
-    <PageLayout title={`Legajo: ${datosTurno.legajo}`}>
+    <PageLayout title={`Legajo: ${datosTurno.legajo && datosTurno.legajo !== 0 ? datosTurno.legajo : "Sin Legajo"}`}>
       <div className="max-w-2xl mx-auto text-center space-y-8">
         
         {/* Card Principal */}

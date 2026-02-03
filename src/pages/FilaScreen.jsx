@@ -13,6 +13,7 @@ const FilaScreen = () => {
   const [indexTramite, setIndexTramite] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
   const [tramites, setTramites] = useState([]);
+  const [errorLegajo, setErrorLegajo] = useState("");
 
   useEffect(() => {
     initializeDatabase();
@@ -34,11 +35,22 @@ const FilaScreen = () => {
     setIndexTramite(selectedIndex);
     setShowWarning(selectedTramite.endsWith("*"));
   };
+  const handleLegajoChange = (e) => {
+    const value = e.target.value;
+    setLegajo(value);
+    if(value.length > 0 && value.length !== 5){
+      setErrorLegajo("El número de legajo debe tener 5 dígitos. Ingrese nuevamente");
+    } else {
+      setErrorLegajo("");
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(!noLegajo && legajo.length !== 5) return;
     try {
-      const turnoData = await postTurnoEnFila(legajo, indexTramite);
+      const legajoAEnviar = noLegajo ? null : legajo;
+      const turnoData = await postTurnoEnFila(legajoAEnviar, indexTramite);
       sessionStorage.setItem("turnoActivo", JSON.stringify(turnoData));
       navigate("/whatsapp");
     } catch (error) {
@@ -66,9 +78,10 @@ const FilaScreen = () => {
             placeholder="Ej: 50481"
             maxLength="5"
             value={legajo}
-            onChange={(e) => setLegajo(e.target.value)}
+            onChange={handleLegajoChange}
             disabled={noLegajo}
           />
+          {errorLegajo && !noLegajo && <p className="text-red-500 text-xs mt-1 font-medium">{errorLegajo}</p>}
         </div>
 
           {/* Checkbox */}
@@ -79,7 +92,13 @@ const FilaScreen = () => {
               id="noLegajo"
               className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
               checked={noLegajo}
-              onChange={(e) => setNoLegajo(e.target.checked)}
+              onChange={(e) => {
+                setNoLegajo(e.target.checked);
+                if(e.target.checked) {
+                  setLegajo(""); // Limpiamos legajo si marca que no tiene
+                  setErrorLegajo("");
+                }
+              }}
             />
             <label htmlFor="noLegajo" className="text-sm font-medium text-blue-800 dark:text-blue-200 cursor-pointer select-none">
               No tengo número de legajo
@@ -113,7 +132,7 @@ const FilaScreen = () => {
             <div className="flex gap-3 p-4 bg-amber-50 dark:bg-amber-900/30 border-l-4 border-amber-500 text-amber-800 dark:text-amber-200 rounded-r-lg transition-colors">
               <AlertCircle className="w-6 h-6 flex-shrink-0" />
               <p className="text-sm">
-                Para la presentación de notas, se deben respetar las fechas del calendario académico.
+                * Para la presentación de notas, se deben respetar las fechas del calendario académico.
               </p>
             </div>
           )}
