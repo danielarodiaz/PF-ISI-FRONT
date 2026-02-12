@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { verificarToken } from "../helpers/login";
+import { verificarToken } from "../api/login";
 import Swal from "sweetalert2";
 
 const ProtectedRoutes = ({ children }) => {
@@ -54,7 +54,7 @@ const ProtectedRoutes = ({ children }) => {
     };
 
     checkToken();
-  }, [location.pathname]); // Re-verify when path changes in protected routes
+  }, [location.pathname, navigate]); // Re-verify when path changes in protected routes
 
   if (isLoading) {
     // You could return a loading spinner here

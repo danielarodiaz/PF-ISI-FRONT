@@ -3,8 +3,8 @@ import { Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 import "../css/turno.css";
-import { personasAdelanteEnLaFila } from "../helpers/filaApi";
-import {getTurnoById} from "../helpers/filaApi";
+import { personasAdelanteEnLaFila } from "../api/filaApi";
+import {getTurnoById} from "../api/filaApi";
 
 const TurnoPage = () => {
   const navigate = useNavigate();

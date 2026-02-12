@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { sendMessageToChatbot } from "../helpers/chatbotApi";
-import { verificarConexionChat } from "../helpers/verificationConnection";
+import { sendMessageToChatbot } from "../api/chatbotApi";
+import { verificarConexionChat } from "../api/verificationConnection";
 
 import { Spinner } from "react-bootstrap";
 import { ToastContainer } from "react-toastify";

@@ -1,4 +1,4 @@
-import { useState,useEffect } from "react";
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import NavBar from "./components/NavBar";
@@ -14,46 +14,11 @@ import ProtectedRoutes from "./routes/ProtectedRoutes";
 import LoginAdmin from "./pages/LoginAdmin";
 import ChatbotScreen from "./pages/ChatbotScreen";
 import FaqScreen from "./pages/FaqScreen";
-import { verificarToken } from "./helpers/login"; // Asegúrate de que existe esta función
-
-
-
 function App() {
-  const [login, setLogin] = useState(!!localStorage.getItem("token")); // Si hay token, login es true
-  
-  // const cambiarLogin = () => {
-  //   if (login) {
-  //     localStorage.removeItem("token"); // Si está logueado y cierra sesión, borra el token
-  //   }
-  //   setLogin(!login);
-  // };
-
   const cambiarLogin = () => {
-    const token = localStorage.getItem("token");
-    setLogin(!!token); // Actualiza el estado basado en la presencia del token
+    localStorage.removeItem("token");
+    window.location.href = "/PF-ISI-FRONT/loginAdmin";
   };
-
-  // useEffect(() => {
-    //   const checkToken = async () => {
-//     const token = localStorage.getItem("token");
-//     if (token) {
-//       try {
-//         const valido = await verificarToken(token);
-//         setLogin(valido);
-//         // If token is invalid, remove it
-//         if (!valido) {
-//           localStorage.removeItem("token");
-//         }
-//       } catch (error) {
-//         console.error("Error verifying token:", error);
-//         localStorage.removeItem("token");
-//         setLogin(false);
-//       }
-//     }
-//   };
-//   checkToken();
-// }, []);
-
 
   return (
     <>
@@ -66,10 +31,9 @@ function App() {
               <Route path="/fila" element={<FilaScreen />} />
               <Route path="/whatsapp" element={<WhatsAppScreen />} />
               <Route path="/turno" element={<TurnoScreen />} />
-              {/* <Route path="/turno" element={<TurnoScreen />} /> */}
               <Route path="/chatbot" element={<ChatbotScreen />} />
               <Route path="/faq" element={<FaqScreen />} />
-              <Route path="/admin/*" element={ <ProtectedRoutes login={login}><RoutesApp /></ProtectedRoutes> } />
+              <Route path="/admin/*" element={<ProtectedRoutes><RoutesApp /></ProtectedRoutes>} />
               <Route
                 path="/loginAdmin"
                 element={<LoginAdmin cambiarLogin={cambiarLogin} />}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import TitleFv from "../components/TitleFv";
 import { initializeDatabase } from "../data/dataFila.js";
-import { getTramites, postTurnoEnFila } from "../helpers/filaApi.js";
+import { getTramites, postTurnoEnFila } from "../api/filaApi.js";
 
 const FilaScreen = () => {
   const navigate = useNavigate();

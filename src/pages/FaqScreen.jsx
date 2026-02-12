@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getFaqs } from "../helpers/faqApi.js";
+import { getFaqs } from "../api/faqApi.js";
 import "../css/faqRows.css";
 
 const FaqScreen = () => {
