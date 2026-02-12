@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 import "../css/login.css";
-import { LogIn } from "../api/login"; // Import the getToken function
+import { logIn } from "../api/authApi";
 
 const LoginAdmin = ({ cambiarLogin }) => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [formValues, setFormValues] = useState({
     user: "",
@@ -38,15 +37,12 @@ const LoginAdmin = ({ cambiarLogin }) => {
     }
   
     try {
-      const token = await LogIn(user, password);
-      console.log(token);
+      const token = await logIn(user, password);
       if (token) {
         localStorage.setItem("token", token.token);
         cambiarLogin(); 
         navigate("/admin/homeAdmin");
-        //setIsLoggedIn(true); 
       } else {
-        console.log("Token no obtenido, despues de ingresar los datos");
         Swal.fire({
           icon: "error",
           title: "Oops...",
@@ -73,20 +69,6 @@ const LoginAdmin = ({ cambiarLogin }) => {
       }
     }
   };
-
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      navigate("/admin/homeAdmin");
-    }
-  }, [isLoggedIn, navigate]);
-  
-  // useEffect(() => {
-  //   if (localStorage.getItem("token")) {
-  //     setIsLoggedIn(true);
-  //   }
-  // }, []);
-
   return (
     <div className="container">
       <div className="row justify-content-center mt-5">

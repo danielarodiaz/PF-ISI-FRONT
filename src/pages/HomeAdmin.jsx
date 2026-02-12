@@ -3,9 +3,8 @@ import TableFila from "../components/TableFila";
 import CardFilaNow from "../components/CardFilaNow";
 import { getFila } from "../api/filaApi"; // Importamos los datos de fila
 import { atenderTurnoConId, putFinalizarAtencion } from "../api/filaApi"; // Importamos la función para atender un turno
-import { postTurnoEnFila } from "../api/filaApi"; // Importamos la función para agregar un turno a la fila
 import { useNavigate } from "react-router-dom";
-import { verificarToken } from "../api/login"; // Importamos la función para verificar el token
+import { verifyToken } from "../api/authApi"; // Importamos la función para verificar el token
 import Swal from "sweetalert2";
 
 
@@ -49,7 +48,7 @@ const HomeAdmin = () => {
   const verificarYFetchFila = async () => {
     try {
       const tokenLocalStorage = localStorage.getItem("token");
-      const tokenValido = await verificarToken(tokenLocalStorage);
+      const tokenValido = await verifyToken(tokenLocalStorage);
       console.log("Token válido:", tokenValido);
       if (!tokenValido) {
         navigate("/loginadmin"); // Redirige a LoginAdmin si el token no es válido

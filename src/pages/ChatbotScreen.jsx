@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { sendMessageToChatbot } from "../api/chatbotApi";
-import { verificarConexionChat } from "../api/verificationConnection";
+import { checkChatbotConnection } from "../api/chatbotHealthApi";
 
 import { Spinner } from "react-bootstrap";
 import { ToastContainer } from "react-toastify";
@@ -9,7 +9,7 @@ import "../css/chatbot.css";
 
 const ChatbotScreen = () => {
   useEffect(() => {
-    verificarConexionChat();
+    checkChatbotConnection();
   }, []);
 
   const [message, setMessage] = useState("");

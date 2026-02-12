@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { verificarToken } from "../api/login";
+import { verifyToken } from "../api/authApi";
 import Swal from "sweetalert2";
 
 const ProtectedRoutes = ({ children }) => {
@@ -20,7 +20,7 @@ const ProtectedRoutes = ({ children }) => {
       }
 
       try {
-        const valido = await verificarToken(token);
+        const valido = await verifyToken(token);
         
         if (!valido) {
           Swal.fire({

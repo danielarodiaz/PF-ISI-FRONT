@@ -7,10 +7,8 @@ import "../css/navbar.css";
 const NavBar = ({ cambiarLogin }) => {
   const location = useLocation();
 
-  const adminRoutes = ["/homeAdmin", "/reportes"];
-  const isAdminPage = adminRoutes.includes(location.pathname);
-  const loginRoutes = ["/loginAdmin"];
-  const isLoginAdmin = loginRoutes.includes(location.pathname);
+  const isAdminPage = location.pathname.startsWith("/admin/");
+  const isLoginAdmin = location.pathname === "/loginAdmin";
 
   return (
     <div className="fixed-top">
@@ -39,9 +37,7 @@ const NavBar = ({ cambiarLogin }) => {
                       className="nav-link active"
                       aria-current="page"
                       to="/faq"
-                    >
-                      FAQ {/* En la bd estarán todas las FAQS, crear un   */}
-                    </NavLink>
+                    >FAQ</NavLink>
                   </li>
                   <li className="nav-item">
                     <NavLink className="nav-link" to="/chatbot">
@@ -63,17 +59,17 @@ const NavBar = ({ cambiarLogin }) => {
               {isAdminPage && !isLoginAdmin && (
                 <>
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/homeAdmin">
+                    <NavLink className="nav-link" to="/admin/homeAdmin">
                       Gestionar FAQ
                     </NavLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/reportes">
+                    <NavLink className="nav-link" to="/admin/reportes">
                       Estadísticas
                     </NavLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/homeAdmin">
+                    <NavLink className="nav-link" to="/admin/homeAdmin">
                       Gestionar Turnos
                     </NavLink>
                   </li>
