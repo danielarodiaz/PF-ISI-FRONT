@@ -1,13 +1,11 @@
 import axios from "axios";
-
-//const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
-const API_BASE_URL = "http://localhost:5132";
+import { API_BASE_URL_CORE } from "../config/api";
 
 
 export const getFila = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get(`${API_BASE_URL}/api/Fila/ObtenerFila`, {
+    const response = await axios.get(`${API_BASE_URL_CORE}/api/Fila/ObtenerFila`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -23,7 +21,7 @@ export const getFila = async () => {
 export const getTurnos = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get(`${API_BASE_URL}/turnos` , {
+    const response = await axios.get(`${API_BASE_URL_CORE}/turnos` , {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -38,7 +36,7 @@ export const getTurnos = async () => {
 export const getTurnoById = async (idTurno) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get(`${API_BASE_URL}/api/Turno/ObtenerTurnoByID`, {
+    const response = await axios.get(`${API_BASE_URL_CORE}/api/Turno/ObtenerTurnoByID`, {
       params: { idTurno: idTurno }
     }, {
       headers: {
@@ -54,7 +52,7 @@ export const getTurnoById = async (idTurno) => {
 
 export const createTurno = async (turnoData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/turnos`, turnoData);
+    const response = await axios.post(`${API_BASE_URL_CORE}/turnos`, turnoData);
     return response.data;
   } catch (error) {
     console.error("Error creating turno:", error);
@@ -64,7 +62,7 @@ export const createTurno = async (turnoData) => {
 
 export const updateTurno = async (id, turnoData) => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/turnos/${id}`, turnoData);
+    const response = await axios.put(`${API_BASE_URL_CORE}/turnos/${id}`, turnoData);
     return response.data;
   } catch (error) {
     console.error(`Error updating turno with id ${id}:`, error);
@@ -74,7 +72,7 @@ export const updateTurno = async (id, turnoData) => {
 
 export const deleteTurno = async (id) => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/turnos/${id}`);
+    const response = await axios.delete(`${API_BASE_URL_CORE}/turnos/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error deleting turno with id ${id}:`, error);
@@ -84,7 +82,7 @@ export const deleteTurno = async (id) => {
 
 export const getTramites = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/tramite`);
+    const response = await axios.get(`${API_BASE_URL_CORE}/api/tramite`);
     return response.data;
   } catch (error) {
     console.error("Error fetching tramites:", error);
@@ -98,7 +96,7 @@ export const postTurnoEnFila = async (legajo, idTramite) => {
       legajo: legajo,
       idTramite: idTramite
     };
-    const response = await axios.post(`${API_BASE_URL}/api/fila/agregarturnoafila`, turnoData);
+    const response = await axios.post(`${API_BASE_URL_CORE}/api/fila/agregarturnoafila`, turnoData);
     return response.data;
   } catch (error) {
     console.error("Error posting turno:", error);
@@ -112,7 +110,7 @@ export const personasAdelanteEnLaFila = async (idTurno) => {
   }
 
   try {
-    const url = `${API_BASE_URL}/api/Fila/ObtenerCantidadDePersonasAdelante`;
+    const url = `${API_BASE_URL_CORE}/api/Fila/ObtenerCantidadDePersonasAdelante`;
     //console.log("Request URL:", url);
     //console.log("Request Params:", { idTurno });
 
@@ -136,7 +134,7 @@ export const atenderTurnoConId = async (idTurno) => {
   try {
     const token = localStorage.getItem("token");
     //console.log("Token:", token);
-    const url = `${API_BASE_URL}/api/Fila/${idTurno}/atender`;
+    const url = `${API_BASE_URL_CORE}/api/Fila/${idTurno}/atender`;
     const response = await axios.put(url, {}, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -151,7 +149,7 @@ export const atenderTurnoConId = async (idTurno) => {
 export const putFinalizarAtencion = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.put(`${API_BASE_URL}/api/fila/finalizaratencion`, {}, {
+    const response = await axios.put(`${API_BASE_URL_CORE}/api/fila/finalizaratencion`, {}, {
       headers: {
         Authorization: `Bearer ${token}`,
       }
@@ -162,4 +160,3 @@ export const putFinalizarAtencion = async () => {
     throw error;
   }
 };
-

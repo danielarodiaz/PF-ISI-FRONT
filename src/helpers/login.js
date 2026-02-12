@@ -1,10 +1,9 @@
 import axios from "axios";
-
-const API_BASE_URL = "http://localhost:5132/";
+import { API_BASE_URL_CORE } from "../config/api";
 
 export const LogIn = async (user, password) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}api/Autenticacion/LogIn`, {
+        const response = await axios.post(`${API_BASE_URL_CORE}/api/Autenticacion/LogIn`, {
             user: user,
             password: password
         }, {
@@ -25,7 +24,7 @@ export const LogIn = async (user, password) => {
 export const verificarToken = async (token) => {
     try {
         //console.log("Enviando solicitud de verificación de token con:", token);
-        const response = await axios.post(`${API_BASE_URL}api/Autenticacion/ValidarToken`, JSON.stringify(token), {
+        const response = await axios.post(`${API_BASE_URL_CORE}/api/Autenticacion/ValidarToken`, JSON.stringify(token), {
             headers: {
                 "Content-Type": "application/json",
                 "accept": "*/*"

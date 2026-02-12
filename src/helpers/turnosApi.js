@@ -1,11 +1,9 @@
 import axios from "axios";
-
-//const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
-const API_BASE_URL = "http://localhost:5132";
+import { API_BASE_URL_CORE } from "../config/api";
 
 export const getTurnos = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/Turno/ObtenerTurnos`);
+    const response = await axios.get(`${API_BASE_URL_CORE}/api/Turno/ObtenerTurnos`);
     return response.data;
   } catch (error) {
     console.error("Error fetching turnos:", error);

@@ -1,10 +1,9 @@
 import axios from "axios";
-
-const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
+import { API_BASE_URL_CHATBOT } from "../config/api";
 
 export const getFaqs = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/faq`, {
+    const response = await axios.get(`${API_BASE_URL_CHATBOT}/faq`, {
       headers: {
         "Content-Type": "application/json",
       },
