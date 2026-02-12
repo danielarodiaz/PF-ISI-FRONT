@@ -1,5 +1,5 @@
 import React from "react";
-import "../css/CardFilaNow.css";
+import "../css/cardFilaNow.css";
 
 const CardFilaNow = ({ turnoData }) => {
   const { legajo, tramite, fecha, turno } = turnoData;
