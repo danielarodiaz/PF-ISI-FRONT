@@ -37,8 +37,7 @@ export const getTurnoById = async (idTurno) => {
   try {
     const token = localStorage.getItem("token");
     const response = await axios.get(`${API_BASE_URL_CORE}/api/Turno/ObtenerTurnoByID`, {
-      params: { idTurno: idTurno }
-    }, {
+      params: { idTurno: idTurno },
       headers: {
         Authorization: `Bearer ${token}`,
       },

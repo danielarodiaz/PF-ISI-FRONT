@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import "../css/turno.css";
 import { personasAdelanteEnLaFila } from "../helpers/filaApi";
 import {getTurnoById} from "../helpers/filaApi";
-import { useParams } from "react-router-dom";
 
 const TurnoPage = () => {
   const navigate = useNavigate();
@@ -186,7 +185,10 @@ const TurnoPage = () => {
             type="button"
             className="btn btn-danger w-50 mb-3"
             onClick={() => {
-              sessionStorage.removeItem(`turno_${idTurno}`); // Eliminar solo el turno actual
+              if (datosTurno?.idTurno) {
+                sessionStorage.removeItem(`turno_${datosTurno.idTurno}`); // Eliminar solo el turno actual
+              }
+              sessionStorage.removeItem("turnoActivo");
               navigate("/");
             }}
           >
