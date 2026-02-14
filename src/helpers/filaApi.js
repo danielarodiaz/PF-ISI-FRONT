@@ -97,7 +97,6 @@ export const cancelarTurno = async (idTurno) => {
     throw error;
   }
 };
-
 // --- TURNOS (Individuales) ---
 export const getTurnos = async () => {
   try {
@@ -125,6 +124,21 @@ export const getTurnoById = async (idTurno) => {
     throw error;
   }
 };
+// --- WhatsApp ---
+export const registrarTelefonoEnTurno = async (idTurno, telefono) => {
+  try {
+      // Usamos PUT porque estamos actualizando un recurso (el Turno) que ya existe
+      const response = await axios.put(`${API_BASE_URL}/api/Fila/RegistrarTelefono`, {
+          idTurno: idTurno,
+          telefono: telefono
+      });
+      return response.data;
+  } catch (error) {
+      console.error("Error en registrarTelefonoEnTurno:", error);
+      throw error;
+  }
+};
+
 
 // --- TRAMITES ---
 export const getTramites = async () => {

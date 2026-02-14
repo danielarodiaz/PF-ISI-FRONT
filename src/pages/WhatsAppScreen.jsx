@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { registrarTelefonoEnTurno } from "../helpers/filaApi";
 import { MessageCircle, Phone, CheckCircle, XCircle } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";
 
@@ -7,13 +8,53 @@ const WhatsAppScreen = () => {
   const navigate = useNavigate();
   const [telefono, setTelefono] = useState("");
 
-  const handleContinue = (acepta) => {
-    if (acepta && telefono) {
-        console.log("Registrando teléfono:", telefono);
-        // postTelefono(telefono)... 
+  const handleContinue = async (acepta) => {
+    // 1. Si el usuario no acepta, nos vamos directo
+    if (!acepta) {
+        navigate("/turno");
+        return;
     }
-    navigate("/turno");
-  };
+
+    // 2. Si acepta, validamos el formato (Regla: 10 dígitos, sin 0 ni 15)
+    // Ejemplo válido: 3815616705
+    const regexValido = /^[1-9]\d{9}$/; 
+
+    if (!regexValido.test(telefono)) {
+        Swal.fire({
+            title: "Formato incorrecto",
+            html: `El número debe tener <b>10 dígitos</b>:<br/>
+                   Código de área (sin 0) + número (sin 15).<br/><br/>
+                   <i>Ejemplo: 3815616705</i>`,
+            icon: "warning",
+            confirmButtonColor: "#16a34a",
+            background: '#1e293b',
+            color: '#fff'
+        });
+        return; // Cortamos la ejecución aquí para que el usuario corrija
+    }
+
+    // 3. Si pasó la validación, procedemos con el registro
+    try {
+        const turnoActivoStr = sessionStorage.getItem("turnoActivo");
+        
+        if (turnoActivoStr) {
+            const turnoData = JSON.parse(turnoActivoStr);
+            await registrarTelefonoEnTurno(turnoData.idTurno, telefono);
+            console.log("Teléfono vinculado con éxito");
+        }
+        // Solo navegamos si el registro fue exitoso o si no había turno (fallback)
+        navigate("/turno");
+    } catch (error) {
+        console.error("No se pudo registrar el teléfono:", error);
+        Swal.fire({
+            title: "Error",
+            text: "Hubo un problema al registrar tu teléfono. Intenta de nuevo.",
+            icon: "error",
+            background: '#1e293b',
+            color: '#fff'
+        });
+    }
+};
 
   return (
     <PageLayout title="Notificaciones">

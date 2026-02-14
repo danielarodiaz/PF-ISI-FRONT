@@ -87,17 +87,24 @@ const TableFila = ({ fila, onAtenderTurno }) => {
                   
                   {/* Celda Acciones */}
                   <td className="px-6 py-4 text-center">
-                    {!turno.atendido ? (
+                    {turno.atendido ? (
+                      /* ESTADO 3: ATENDIDO (Verde) - Se mantiene igual */
+                      <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900 px-3 py-1 rounded-full text-xs font-bold">
+                        <CheckCircle size={14} /> Atendido
+                      </span>
+                    ) : turno.atendiendo ? (
+                      /* ESTADO 2: EN VENTANILLA (Naranja/Ámbar) - Nuevo estado visual */
+                      <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                        <Clock size={14} /> En ventanilla...
+                      </span>
+                    ) : (
+                      /* ESTADO 1: PENDIENTE (Azul) - Se mantiene igual */
                       <button 
                         onClick={() => onAtenderTurno(turno)}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow-sm shadow-blue-200 dark:shadow-none transition-all hover:scale-105 active:scale-95"
                       >
                         <Play size={14} fill="currentColor" /> Atender
                       </button>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900 px-3 py-1 rounded-full text-xs font-bold">
-                        <CheckCircle size={14} /> Atendido
-                      </span>
                     )}
                   </td>
                 </tr>

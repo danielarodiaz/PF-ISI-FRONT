@@ -27,11 +27,17 @@ const HomeAdmin = () => {
         tramite: item.turno.tramite.descripcion,
         fecha: item.turno.fechaDeCreacion,
         turno: item.turno.nombreTurno,
+        atendiendo: item.turno.estadoTurno.descripcion === "Atendiendo",
         atendido: item.turno.estadoTurno.descripcion === "Atendido",
       }));
       setFila(filaTransformada);
     } catch (error) {
-      console.error(error);
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/loginAdmin");
+        Swal.fire("Error", "Sesión expirada. Por favor, inicie sesión nuevamente.", "error");
+      }
+      console.error("Error al obtener la fila:", error);
     }
   };
 
@@ -42,19 +48,40 @@ const HomeAdmin = () => {
   }, []);
 
   // --- ACCIONES ---
-  const atenderTurno = (turno) => {
-    atenderTurnoConId(turno.id);
-    setTurnoActual(turno);
-    setAtendiendo(true);
+  const atenderTurno = async (turno) => { // Agregamos async
+    try {
+      // 1. Esperamos a que el servidor confirme el cambio
+      await atenderTurnoConId(turno.id);
+      
+      // 2. Actualizamos el estado local para la UI
+      setTurnoActual(turno);
+      setAtendiendo(true);
+
+      // 3. Opcional: Refrescamos la lista completa para sincronizar
+      await fetchFila();
+      
+      console.log("Turno atendido y WhatsApp disparado (Mock)");
+    } catch (error) {
+      Swal.fire("Error", "No se pudo atender el turno. Verifique si ya hay uno en atención.", "error");
+    }
   };
 
-  const finalizarAtencion = () => {
+  const finalizarAtencion = async () => { // Agregamos async
     if (turnoActual) {
-      const nuevaFila = fila.map((t) => t.id === turnoActual.id ? { ...t, atendido: true } : t);
-      putFinalizarAtencion();
-      setFila(nuevaFila);
-      setAtendiendo(false);
-      setTurnoActual(null);
+      try {
+        // 1. Esperamos al servidor
+        await putFinalizarAtencion();
+        
+        // 2. Limpiamos el estado de atención
+        setAtendiendo(false);
+        setTurnoActual(null);
+
+        // 3. Forzamos la recarga de la lista desde el servidor
+        await fetchFila();
+        
+      } catch (error) {
+        console.error("Error al finalizar:", error);
+      }
     }
   };
 
