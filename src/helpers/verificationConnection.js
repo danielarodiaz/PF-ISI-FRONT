@@ -1,7 +1,7 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-
-const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
+import { CHATBOT_URL } from "./config";
+const API_BASE_URL = CHATBOT_URL;
 
 export const verificarConexionChat = async () => {
   try {

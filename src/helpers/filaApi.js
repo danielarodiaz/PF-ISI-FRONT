@@ -1,8 +1,8 @@
 import axios from "axios";
+import { BACKEND_URL } from "./config";
 
-// ✅ CONFIRMADO: Puerto 5132
-const API_BASE_URL = "http://localhost:5132"; 
-
+const API_BASE_URL = BACKEND_URL;
+ 
 // --- REPORTES (DASHBOARD) ---
 export const getDatosReportes = async () => {
   try {
@@ -123,6 +123,12 @@ export const getTurnoById = async (idTurno) => {
     console.error(`Error fetching turno with id ${idTurno}:`, error);
     throw error;
   }
+};
+export const getTurnoEnVentanilla = async () => {
+  const resp = await axios.get(`${API_BASE_URL}/api/Fila/TurnoEnVentanilla`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  });
+  return resp.data;
 };
 // --- WhatsApp ---
 export const registrarTelefonoEnTurno = async (idTurno, telefono) => {

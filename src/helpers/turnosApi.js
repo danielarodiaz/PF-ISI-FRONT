@@ -1,7 +1,6 @@
 import axios from "axios";
-
-//const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
-const API_BASE_URL = "http://localhost:5132";
+import { BACKEND_URL } from "./config";
+const API_BASE_URL = BACKEND_URL;
 
 export const getTurnos = async () => {
   try {

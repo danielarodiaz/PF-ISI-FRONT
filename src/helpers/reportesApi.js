@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { BACKEND_URL } from "./config";
 
-// Asegúrate de que este puerto sea el mismo que usa tu .NET (ej: 7122, 5173, etc)
-const baseURL = 'http://localhost:5132/api'; 
+const baseURL = BACKEND_URL + '/api'; 
 
 export const getDatosReportes = async () => {
   try {

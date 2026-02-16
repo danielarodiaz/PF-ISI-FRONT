@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import TableFila from "../components/TableFila";
-import { getFila, atenderTurnoConId, putFinalizarAtencion } from "../helpers/filaApi";
+import { getFila, atenderTurnoConId, putFinalizarAtencion, getTurnoEnVentanilla } from "../helpers/filaApi";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { 
@@ -41,23 +41,46 @@ const HomeAdmin = () => {
     }
   };
 
-  useEffect(() => {
-    fetchFila();
-    const interval = setInterval(fetchFila, 5000);
-    return () => clearInterval(interval);
-  }, []);
+useEffect(() => {
+  const inicializarPanel = async () => {
+    await fetchFila();
+
+    try {
+      const turnoDb = await getTurnoEnVentanilla();
+      
+      if (turnoDb) {
+        const turnoMapeado = {
+          id: turnoDb.idTurno,
+          legajo: turnoDb.legajo,
+          tramite: turnoDb.tramite.descripcion,
+          fecha: turnoDb.fechaDeCreacion,
+          turno: turnoDb.nombreTurno,
+          atendiendo: true,
+          atendido: false,
+        };
+
+        setTurnoActual(turnoMapeado);
+        setAtendiendo(true);
+        console.log("Estado recuperado exitosamente:", turnoMapeado.turno);
+      }
+    } catch (error) {
+      console.log("No hay turno previo en ventanilla.");
+    }
+  };
+
+  inicializarPanel();
+
+  const interval = setInterval(fetchFila, 5000);
+  return () => clearInterval(interval);
+}, []);
 
   // --- ACCIONES ---
-  const atenderTurno = async (turno) => { // Agregamos async
+  const atenderTurno = async (turno) => {
     try {
-      // 1. Esperamos a que el servidor confirme el cambio
       await atenderTurnoConId(turno.id);
-      
-      // 2. Actualizamos el estado local para la UI
       setTurnoActual(turno);
       setAtendiendo(true);
 
-      // 3. Opcional: Refrescamos la lista completa para sincronizar
       await fetchFila();
       
       console.log("Turno atendido y WhatsApp disparado (Mock)");
@@ -66,17 +89,13 @@ const HomeAdmin = () => {
     }
   };
 
-  const finalizarAtencion = async () => { // Agregamos async
+  const finalizarAtencion = async () => {
     if (turnoActual) {
       try {
-        // 1. Esperamos al servidor
         await putFinalizarAtencion();
-        
-        // 2. Limpiamos el estado de atención
         setAtendiendo(false);
         setTurnoActual(null);
 
-        // 3. Forzamos la recarga de la lista desde el servidor
         await fetchFila();
         
       } catch (error) {
@@ -108,10 +127,8 @@ const HomeAdmin = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
       
-      {/* HEADER: Título y Acciones */}
       <header className="flex flex-col xl:flex-row justify-between items-center mb-8 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors gap-4">
         
-        {/* Título e Info */}
         <div className="w-full xl:w-auto">
            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Panel de Administración</h2>
            <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-1">
@@ -119,10 +136,8 @@ const HomeAdmin = () => {
            </p>
         </div>
         
-        {/* Barra de Herramientas (Botones) */}
         <div className="flex flex-wrap items-center justify-end gap-3 w-full xl:w-auto">
             
-            {/* Botón Reportes */}
             <button 
                 onClick={() => navigate("/admin/dashboard")}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 rounded-lg font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors border border-blue-100 dark:border-blue-900/50"
@@ -131,9 +146,8 @@ const HomeAdmin = () => {
                 Ver Reportes
             </button>
 
-            {/* Botón FAQs (Nuevo) */}
             <button 
-                onClick={() => navigate("/admin/faqs")} // Asumimos esta ruta para el futuro
+                onClick={() => navigate("/admin/faqs")}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 rounded-lg font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors border border-purple-100 dark:border-purple-900/50"
             >
                 <MessageCircleQuestion size={18} />
@@ -143,7 +157,6 @@ const HomeAdmin = () => {
             {/* Separador vertical (solo visible en desktop) */}
             <div className="hidden xl:block w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1"></div>
 
-            {/* Botón Logout */}
             <button 
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-lg transition-all border border-red-200 dark:border-red-900/50"

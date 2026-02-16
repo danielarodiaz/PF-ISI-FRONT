@@ -1,6 +1,8 @@
 import axios from "axios";
+import { CHATBOT_URL } from "./config";
+const API_BASE_URL = CHATBOT_URL;
 
-const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
+// const API_BASE_URL = "https://lucasdepetris.duckdns.org:8080";
 
 export const getFaqs = async () => {
   try {
