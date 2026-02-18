@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import filavirtual from "../assets/filavirtual.jpg"; // Asegúrate de tener estas imágenes
+import filavirtual from "../assets/filaVirtual.jpg"; // Asegúrate de tener estas imágenes
 import FAQ from "../assets/FAQ.png";
 import chatbot from "../assets/chatbot.png";
 import { Clock, Info, MapPin } from "lucide-react"; // Iconos nuevos

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { verificarToken } from "../helpers/login";
 import Swal from "sweetalert2";
 
@@ -7,6 +7,7 @@ const ProtectedRoutes = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkToken = async () => {
@@ -53,7 +54,7 @@ const ProtectedRoutes = ({ children }) => {
     };
 
     checkToken();
-  }, [location.pathname]); // Re-verify when path changes in protected routes
+  }, [location.pathname, navigate]); // Re-verify when path changes in protected routes
 
   if (isLoading) {
     // You could return a loading spinner here
