@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import { verificarToken } from "../helpers/login";
 import Swal from "sweetalert2";
 
@@ -7,6 +8,7 @@ const ProtectedRoutes = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkToken = async () => {
@@ -35,7 +37,7 @@ const ProtectedRoutes = ({ children }) => {
         } else {
           setIsAuthenticated(true);
         }
-      } catch (error) {
+      } catch {
         Swal.fire({
           icon: "error",
           title: "Oops...",
@@ -53,7 +55,7 @@ const ProtectedRoutes = ({ children }) => {
     };
 
     checkToken();
-  }, [location.pathname]); // Re-verify when path changes in protected routes
+  }, [location.pathname, navigate]); // Re-verify when path changes in protected routes
 
   if (isLoading) {
     // You could return a loading spinner here
@@ -65,6 +67,10 @@ const ProtectedRoutes = ({ children }) => {
   }
 
   return children;
+};
+
+ProtectedRoutes.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default ProtectedRoutes;

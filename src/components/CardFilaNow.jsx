@@ -1,4 +1,3 @@
-import React from "react";
 import { User, FileText, Megaphone } from "lucide-react";
 
 const CardFilaNow = ({ turnoData }) => {

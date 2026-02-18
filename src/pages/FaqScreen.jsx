@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import { getFaqs } from "../helpers/faqApi.js";
 import { ChevronDown, ChevronUp, HelpCircle, MessageCircleQuestion } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";

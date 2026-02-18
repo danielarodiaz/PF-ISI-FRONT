@@ -10,7 +10,7 @@ export const verificarConexionChat = async () => {
     if (response.status === 200) {
       console.log("El chatbot está en línea.");
     }
-  } catch (error) {
+  } catch {
     // Muestra el toast si hay un error (el servidor no está disponible)
     toast.error("El chatbot no está disponible. Por favor, intenta más tarde.");
   }

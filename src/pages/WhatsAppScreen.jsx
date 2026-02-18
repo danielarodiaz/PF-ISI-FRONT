@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registrarTelefonoEnTurno } from "../helpers/filaApi";
 import { MessageCircle, Phone, CheckCircle, XCircle } from "lucide-react";
+import Swal from "sweetalert2";
 import PageLayout from "../components/layout/PageLayout";
 
 const WhatsAppScreen = () => {

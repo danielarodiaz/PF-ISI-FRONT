@@ -1,4 +1,3 @@
-import React from "react";
 import { Play, CheckCircle, Clock, FileText } from "lucide-react";
 
 const TableFila = ({ fila, onAtenderTurno }) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { personasAdelanteEnLaFila, getTurnoById, cancelarTurno } from "../helpers/filaApi";
 import { Users, Clock, LogOut } from "lucide-react";

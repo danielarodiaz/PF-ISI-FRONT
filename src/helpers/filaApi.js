@@ -64,15 +64,11 @@ export const personasAdelanteEnLaFila = async (idTurno) => {
 export const atenderTurnoConId = async (idTurno) => {
   if (!idTurno) throw new Error("idTurno is required");
 
-  try {
-    const token = localStorage.getItem("token");
-    const response = await axios.put(`${API_BASE_URL}/api/Fila/${idTurno}/atender`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const token = localStorage.getItem("token");
+  const response = await axios.put(`${API_BASE_URL}/api/Fila/${idTurno}/atender`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
 };
 
 export const putFinalizarAtencion = async () => {

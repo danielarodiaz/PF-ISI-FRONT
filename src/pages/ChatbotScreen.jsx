@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useEffect,useState,useRef } from "react";
 import { sendMessageToChatbot } from "../helpers/chatbotApi";
 import { verificarConexionChat } from "../helpers/verificationConnection";
 import { ToastContainer } from "react-toastify";

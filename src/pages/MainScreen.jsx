@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import filavirtual from "../assets/filavirtual.jpg"; // Asegúrate de tener estas imágenes
+import filavirtual from "../assets/filaVirtual.jpg"; // Asegúrate de tener estas imágenes
 import FAQ from "../assets/FAQ.png";
 import chatbot from "../assets/chatbot.png";
 import { Clock, Info, MapPin } from "lucide-react"; // Iconos nuevos
@@ -20,7 +20,7 @@ const CardOption = ({ to, img, title, subtitle, colorInfo }) => (
 const MainScreen = () => {
   // Simulación de estado (esto vendría de tu lógica real o API)
   const [turnoActivo, setTurnoActivo] = useState(null); 
-  const [estaAbierto, setEstaAbierto] = useState(true); // Deberías calcular esto con la hora actual
+  const estaAbierto = true; // Deberías calcular esto con la hora actual
 
   useEffect(() => {
     // Verificar si hay turno en sessionStorage al cargar
