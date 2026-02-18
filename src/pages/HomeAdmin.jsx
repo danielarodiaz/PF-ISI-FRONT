@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useEffect,useState } from "react";
 import TableFila from "../components/TableFila";
 import { getFila, atenderTurnoConId, putFinalizarAtencion, getTurnoEnVentanilla } from "../helpers/filaApi";
 import { useNavigate } from "react-router-dom";
@@ -63,7 +63,7 @@ useEffect(() => {
         setAtendiendo(true);
         console.log("Estado recuperado exitosamente:", turnoMapeado.turno);
       }
-    } catch (error) {
+    } catch {
       console.log("No hay turno previo en ventanilla.");
     }
   };
@@ -84,7 +84,7 @@ useEffect(() => {
       await fetchFila();
       
       console.log("Turno atendido y WhatsApp disparado (Mock)");
-    } catch (error) {
+    } catch {
       Swal.fire("Error", "No se pudo atender el turno. Verifique si ya hay uno en atención.", "error");
     }
   };

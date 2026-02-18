@@ -1,14 +1,7 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { 
-  BarChart, Bar, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell 
-} from "recharts";
-import { ArrowLeft, Download, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 import { getDatosReportes } from "../helpers/filaApi";
 
 const DashboardMetrics = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [rawData, setRawData] = useState([]);
 
@@ -17,7 +10,7 @@ const DashboardMetrics = () => {
       try {
         const turnos = await getDatosReportes();
         setRawData(turnos || []); 
-      } catch (error) {
+      } catch {
         console.error("Error cargando reportes");
       } finally {
         setLoading(false);
@@ -27,43 +20,7 @@ const DashboardMetrics = () => {
   }, []);
 
   // --- 1. TRÁMITES MÁS FRECUENTES ---
-  const dataTramites = useMemo(() => {
-    const conteo = {};
-    rawData.forEach(t => {
-      // Usamos optional chaining por si el objeto tramite viene nulo
-      const nombre = t.tramite?.descripcion || t.tramite || "Otros"; 
-      conteo[nombre] = (conteo[nombre] || 0) + 1;
-    });
-
-    return Object.keys(conteo).map(key => ({
-      name: key.substring(0, 15), 
-      cantidad: conteo[key]
-    })).sort((a, b) => b.cantidad - a.cantidad).slice(0, 10);
-  }, [rawData]);
-
-  // --- 2. CONCURRENCIA (Usando FechaDeCreacion real) ---
-  const dataConcurrencia = useMemo(() => {
-    let manana = 0; let tarde = 0; let noche = 0;
-
-    rawData.forEach(t => {
-      if (t.fechaDeCreacion) {
-        const fecha = new Date(t.fechaDeCreacion);
-        const hora = fecha.getHours();
-        
-        if (hora >= 7 && hora < 12) manana++;
-        else if (hora >= 12 && hora < 18) tarde++;
-        else noche++;
-      }
-    });
-
-    return [
-      { name: 'Mañana', value: manana, color: '#93c5fd' },
-      { name: 'Tarde', value: tarde, color: '#4f46e5' },
-      { name: 'Noche', value: noche, color: '#c7d2fe' },
-    ].filter(d => d.value > 0);
-  }, [rawData]);
-
-  // --- 3. TIEMPO PROMEDIO (Calculado con fechas reales) ---
+  // --- TIEMPO PROMEDIO (Calculado con fechas reales) ---
   const promedioEspera = useMemo(() => {
     // Filtramos solo los turnos que ya fueron atendidos (Estado 3 = Atendido, ajusta según tu Enum)
     const turnosAtendidos = rawData.filter(t => 
@@ -88,14 +45,9 @@ const DashboardMetrics = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
-       {/* ... (El resto del JSX se mantiene igual que la versión anterior) ... */}
-       {/* Solo asegúrate de usar {promedioEspera} en la tarjeta correspondiente */}
-       
-       {/* Ejemplo de uso en la tarjeta de Tiempo Promedio: */}
-       {/* <div className="text-5xl font-black text-orange-500 my-4">
-           {promedioEspera}m
-       </div> 
-       */}
+      <div className="text-center text-slate-700 dark:text-slate-200">
+        Tiempo promedio estimado: <strong>{promedioEspera}m</strong>
+      </div>
     </div>
   );
 };

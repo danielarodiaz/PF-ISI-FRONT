@@ -1,4 +1,3 @@
-import React from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import LogoInfo_track from "../assets/LogoInfo_track.png";
 import "../css/footer.css";

@@ -1,10 +1,3 @@
-import axios from "axios";
-
-const API_BASE_URL = "http://localhost:5132";
-
-
-
-
 export const initializeDatabase = () => {
   const existingData = JSON.parse(localStorage.getItem("filaUsuarios"));
   if (!existingData) {

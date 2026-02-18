@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { 
@@ -96,7 +96,7 @@ const FaqsAdmin = () => {
         Swal.fire("Creado", "Nueva pregunta agregada.", "success");
       }
       handleCloseModal();
-    } catch (error) {
+    } catch {
       Swal.fire("Error", "No se pudo guardar los cambios", "error");
     }
   };
@@ -121,7 +121,7 @@ const FaqsAdmin = () => {
           // Simulación visual
           setFaqs(faqs.filter(f => f.id_faq !== id));
           Swal.fire('Eliminado!', 'El registro ha sido eliminado.', 'success');
-        } catch (error) {
+        } catch {
           Swal.fire("Error", "No se pudo eliminar", "error");
         }
       }
@@ -133,6 +133,10 @@ const FaqsAdmin = () => {
     f.pregunta.toLowerCase().includes(searchTerm.toLowerCase()) || 
     f.respuesta.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return <div className="p-8 text-center">Cargando FAQs...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">

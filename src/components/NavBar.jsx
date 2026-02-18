@@ -1,4 +1,3 @@
-import React from "react";
 import logoUTN from "../assets/UTN-TUC.png";
 import { Link, useLocation, NavLink } from "react-router-dom";
 

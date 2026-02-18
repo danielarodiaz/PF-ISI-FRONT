@@ -1,4 +1,3 @@
-import React from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { Sun, Moon, MessageCircle, HelpCircle, List, Home } from "lucide-react"; 

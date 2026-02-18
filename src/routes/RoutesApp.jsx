@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import React from "react";
 
 import HomeAdmin from "../pages/HomeAdmin";
 //import ReportesScreen from "../pages/ReportesScreen";
