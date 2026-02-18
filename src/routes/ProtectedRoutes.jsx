@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import { verificarToken } from "../helpers/login";
 import Swal from "sweetalert2";
 
@@ -66,6 +67,10 @@ const ProtectedRoutes = ({ children }) => {
   }
 
   return children;
+};
+
+ProtectedRoutes.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default ProtectedRoutes;
