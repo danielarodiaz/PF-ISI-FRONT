@@ -32,16 +32,6 @@ const TableFila = ({ fila, onAtenderTurno }) => {
     // dark:bg-slate-900 -> Fondo oscuro para la tarjeta
     // dark:border-slate-800 -> Borde sutil oscuro
     <div className="w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 transition-colors duration-300">
-      
-      {/* Encabezado de la tabla */}
-      <div className="bg-slate-800 dark:bg-black/40 px-6 py-4 flex items-center justify-between border-b border-slate-700 dark:border-slate-800">
-        <h1 className="text-lg font-bold text-white flex items-center gap-2">
-           Fila Virtual
-        </h1>
-        <span className="text-xs text-slate-300 bg-slate-700 dark:bg-slate-800 px-2 py-1 rounded-md border border-slate-600 dark:border-slate-700">
-            Total: {fila.length}
-        </span>
-      </div>
 
       {/* Contenedor responsivo */}
       <div className="overflow-x-auto">
