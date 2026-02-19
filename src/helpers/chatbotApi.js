@@ -46,3 +46,119 @@ export const sendMessageToChatbot = async (message, historial = [], conversation
     );
   }
 };
+
+export const sendMessageToChatbotStream = async (
+  message,
+  historial = [],
+  conversationId = null,
+  { onToken, onMetadata } = {}
+) => {
+  try {
+    ensureChatbotConfigured();
+
+    const response = await fetch(`${API_BASE_URL}/chatbot/messages/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        historial,
+        mensaje: message,
+        conversation_id: conversationId,
+      }),
+    });
+
+    if (!response.ok || !response.body) {
+      throw createServiceError(
+        SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
+        "El servicio del asistente no está disponible."
+      );
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let answer = "";
+    let metadata = {};
+
+    const parseEvent = (rawEvent) => {
+      const lines = rawEvent.split("\n");
+      let eventName = "message";
+      const dataLines = [];
+
+      lines.forEach((line) => {
+        if (line.startsWith("event:")) {
+          eventName = line.slice(6).trim();
+        } else if (line.startsWith("data:")) {
+          dataLines.push(line.slice(5).trim());
+        }
+      });
+
+      const dataText = dataLines.join("\n");
+      let data = {};
+      if (dataText) {
+        try {
+          data = JSON.parse(dataText);
+        } catch {
+          data = {};
+        }
+      }
+
+      return { eventName, data };
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const rawEvents = buffer.split("\n\n");
+      buffer = rawEvents.pop() || "";
+
+      rawEvents.forEach((rawEvent) => {
+        const { eventName, data } = parseEvent(rawEvent);
+        if (eventName === "token") {
+          const tokenText = data?.text || "";
+          answer += tokenText;
+          if (onToken) onToken(answer);
+          return;
+        }
+
+        if (eventName === "metadata") {
+          metadata = data || {};
+          if (onMetadata) onMetadata(metadata);
+          return;
+        }
+
+        if (eventName === "error") {
+          throw createServiceError(
+            SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
+            data?.detail || "El servicio del asistente no está disponible."
+          );
+        }
+      });
+    }
+
+    return {
+      conversation_id: metadata?.conversation_id || conversationId,
+      respuesta_bot: answer.trim(),
+      sources: metadata?.sources || [],
+      latency_ms: metadata?.latency_ms,
+      retrieval_ms: metadata?.retrieval_ms,
+      inference_ms: metadata?.inference_ms,
+    };
+  } catch (error) {
+    console.error("Error al enviar mensaje por SSE al chatbot:", error);
+    if (error?.code === SERVICE_ERROR_CODES.CONFIG_MISSING) {
+      throw error;
+    }
+    if (error?.code === SERVICE_ERROR_CODES.BAD_REQUEST) {
+      throw error;
+    }
+    throw createServiceError(
+      SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
+      "El servicio del asistente no está disponible.",
+      error
+    );
+  }
+};
