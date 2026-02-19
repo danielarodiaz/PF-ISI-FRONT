@@ -11,6 +11,10 @@ const ENV_MAX_USER_MESSAGES = Number(import.meta.env.VITE_CHATBOT_MAX_USER_MESSA
 const MAX_USER_MESSAGES = Number.isFinite(ENV_MAX_USER_MESSAGES) && ENV_MAX_USER_MESSAGES > 0
   ? Math.floor(ENV_MAX_USER_MESSAGES)
   : 30;
+const TRANSIENT_SYSTEM_MESSAGES = new Set([
+  "El asistente no está disponible en este momento.",
+  "El asistente no está configurado. Contacta al administrador.",
+]);
 
 const trimHistoryWindow = (history, maxUserMessages) => {
   if (!Array.isArray(history) || history.length === 0) return [];
@@ -61,6 +65,9 @@ const saveChatSession = (chatHistory, conversationId) => {
   );
 };
 
+const isTransientSystemBotMessage = (msg) =>
+  msg?.autor === "bot" && TRANSIENT_SYSTEM_MESSAGES.has(msg?.contenido || "");
+
 const ChatbotScreen = () => {
   const initialSessionRef = useRef(loadChatSession());
   const [message, setMessage] = useState("");
@@ -103,6 +110,11 @@ const ChatbotScreen = () => {
       setChatErrorType(available ? null : healthReason);
       if (available && !hasStoredConversation) {
         setChatHistory([{ autor: "bot", contenido: "¡Hola! Soy Uteniano 😎. ¿En qué puedo ayudarte hoy?" }]);
+      } else if (available && hasStoredConversation) {
+        const storedHistory = initialSessionRef.current?.chatHistory || [];
+        if (storedHistory.length === 1 && isTransientSystemBotMessage(storedHistory[0])) {
+          setChatHistory([{ autor: "bot", contenido: "¡Hola! Soy Uteniano 😎. ¿En qué puedo ayudarte hoy?" }]);
+        }
       } else if (!available && !hasStoredConversation && healthReason === SERVICE_ERROR_CODES.CONFIG_MISSING) {
         setChatHistory([{ autor: "bot", contenido: "El asistente no está configurado. Contacta al administrador." }]);
       } else if (!available && !hasStoredConversation) {
@@ -136,7 +148,10 @@ const ChatbotScreen = () => {
     const currentMsg = message;
     setMessage("");
     setIsLoading(true);
-    const baseHistory = trimHistoryWindow(chatHistory, MAX_USER_MESSAGES);
+    const baseHistory = trimHistoryWindow(
+      chatHistory.filter((msg) => !isTransientSystemBotMessage(msg)),
+      MAX_USER_MESSAGES
+    );
     const nextHistory = [
       ...baseHistory,
       { autor: "usuario", contenido: currentMsg },
