@@ -100,6 +100,8 @@ export const sendMessageToChatbotStream = async (
     let buffer = "";
     let answer = "";
     let metadata = {};
+    let doneReceived = false;
+    let doneStatus = null;
 
     const parseEvent = (rawEvent) => {
       const lines = rawEvent.split("\n");
@@ -156,7 +158,19 @@ export const sendMessageToChatbotStream = async (
             data?.detail || "El servicio del asistente no está disponible."
           );
         }
+
+        if (eventName === "done") {
+          doneReceived = true;
+          doneStatus = data?.status || null;
+        }
       });
+    }
+
+    if (!doneReceived || doneStatus !== "completed") {
+      throw createServiceError(
+        SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
+        "La conexión con el asistente se interrumpió. Intenta nuevamente."
+      );
     }
 
     return {

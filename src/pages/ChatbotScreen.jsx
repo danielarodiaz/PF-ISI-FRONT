@@ -2,7 +2,7 @@ import { useEffect,useState,useRef } from "react";
 import { sendMessageToChatbot, sendMessageToChatbotStream } from "../helpers/chatbotApi";
 import { verificarConexionChat } from "../helpers/verificationConnection";
 import { SERVICE_ERROR_CODES, isBadRequestError, isConfigMissingError, isTooManyRequestsError } from "../helpers/serviceErrors";
-import { Send, Bot, User, Loader2 } from "lucide-react"; // Iconos
+import { Send, Bot, User, Loader2, RotateCcw } from "lucide-react"; // Iconos
 import PageLayout from "../components/layout/PageLayout";
 
 const INITIAL_MESSAGE_DELAY_MS = 1200;
@@ -15,6 +15,10 @@ const ENV_MAX_HISTORY_MESSAGES = Number(import.meta.env.VITE_CHATBOT_MAX_HISTORY
 const MAX_HISTORY_MESSAGES = Number.isFinite(ENV_MAX_HISTORY_MESSAGES) && ENV_MAX_HISTORY_MESSAGES > 0
   ? Math.floor(ENV_MAX_HISTORY_MESSAGES)
   : 12;
+const ENV_MAX_MESSAGE_CHARS = Number(import.meta.env.VITE_CHATBOT_MAX_MESSAGE_CHARS);
+const MAX_MESSAGE_CHARS = Number.isFinite(ENV_MAX_MESSAGE_CHARS) && ENV_MAX_MESSAGE_CHARS > 0
+  ? Math.floor(ENV_MAX_MESSAGE_CHARS)
+  : 350;
 const TRANSIENT_SYSTEM_MESSAGES = new Set([
   "El asistente no está disponible en este momento.",
   "El asistente no está configurado. Contacta al administrador.",
@@ -91,6 +95,21 @@ const ChatbotScreen = () => {
   const isWaitingBotResponse = isLoading || shouldShowInitialConnecting;
   const botLoadingText = chatStatusChecked ? "Pensando..." : "Conectando...";
 
+  const getWelcomeOrStatusMessage = () => (
+    chatAvailable
+      ? { autor: "bot", contenido: "¡Hola! Soy Uteniano 😎. ¿En qué puedo ayudarte hoy?" }
+      : chatErrorType === SERVICE_ERROR_CODES.CONFIG_MISSING
+        ? { autor: "bot", contenido: "El asistente no está configurado. Contacta al administrador." }
+        : { autor: "bot", contenido: "El asistente no está disponible en este momento." }
+  );
+
+  const resetConversation = (systemNotice = null) => {
+    const baseMessage = systemNotice ? [{ autor: "bot", contenido: systemNotice }] : [getWelcomeOrStatusMessage()];
+    setConversationId(null);
+    setChatHistory(baseMessage);
+    setMessage("");
+  };
+
   useEffect(() => {
     let isCancelled = false;
     const hasStoredConversation = Boolean((initialSessionRef.current?.chatHistory || []).length);
@@ -152,6 +171,16 @@ const ChatbotScreen = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault(); 
     if (!chatAvailable || !message.trim()) return;
+    if (message.trim().length > MAX_MESSAGE_CHARS) {
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          autor: "bot",
+          contenido: `Tu mensaje es demasiado largo. Máximo permitido: ${MAX_MESSAGE_CHARS} caracteres.`,
+        },
+      ]);
+      return;
+    }
 
     const currentMsg = message;
     setMessage("");
@@ -204,6 +233,16 @@ const ChatbotScreen = () => {
         });
       } catch (fallbackError) {
         console.error("Error al enviar mensaje:", fallbackError);
+        const isHistoryTooLargeError =
+          isBadRequestError(fallbackError) &&
+          String(fallbackError?.message || "").toLowerCase().includes("historial demasiado grande");
+
+        if (isHistoryTooLargeError) {
+          resetConversation("Reinicié la conversación porque el historial era demasiado grande. Intenta de nuevo.");
+          setIsLoading(false);
+          return;
+        }
+
         const unavailableMessage = isConfigMissingError(fallbackError)
           ? "El asistente no está configurado. Contacta al administrador."
           : isTooManyRequestsError(fallbackError)
@@ -242,13 +281,22 @@ const ChatbotScreen = () => {
             <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm">
                 <Bot className="text-white w-6 h-6" />
             </div>
-            <div>
+            <div className="flex-1">
                 <h3 className="text-white font-bold text-lg">Uteniano 😎</h3>
                 <p className="text-blue-100 dark:text-blue-300 text-xs flex items-center gap-1">
                     <span className={`w-2 h-2 rounded-full ${chatAvailable ? "bg-green-400 animate-pulse" : "bg-red-400"}`}></span>
                     {chatAvailable ? "En línea" : chatErrorType === SERVICE_ERROR_CODES.CONFIG_MISSING ? "Sin configurar" : "No disponible"}
                 </p>
             </div>
+            <button
+              type="button"
+              onClick={() => resetConversation()}
+              className="inline-flex items-center gap-2 rounded-lg bg-white/15 hover:bg-white/25 px-3 py-2 text-xs font-semibold text-white transition-colors"
+              title="Reiniciar conversación"
+            >
+              <RotateCcw size={14} />
+              Reiniciar
+            </button>
           </div>
 
           {/* Área de Mensajes */}
@@ -321,6 +369,9 @@ const ChatbotScreen = () => {
                 <Send size={20} />
               </button>
             </form>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              Máximo {MAX_MESSAGE_CHARS} caracteres por mensaje.
+            </p>
           </div>
         </div>
         
