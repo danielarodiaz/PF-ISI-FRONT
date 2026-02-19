@@ -1,18 +1,32 @@
 import { Link, useLocation, Outlet } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
-import { Sun, Moon, MessageCircle, HelpCircle, List, Home } from "lucide-react"; 
+import { Sun, Moon, MessageCircle, HelpCircle, List, Home, LayoutDashboard, BarChart3 } from "lucide-react"; 
 import logoUTN from "../../assets/UTN-TUC.png"; 
 import logoInfoTrack from "../../assets/LogoInfo_track.png";
+import { getTurnoActivoRef } from "../../helpers/turnoStorage";
 
 const PublicLayout = () => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const hasActiveTurno = Boolean(getTurnoActivoRef()?.publicToken);
+  const filaNavPath = hasActiveTurno ? "/turno" : "/fila";
+  const filaNavLabel = hasActiveTurno ? "Mi turno" : "Solicitar turno";
 
-  const navItems = [
-    { path: "/fila", label: "Fila", icon: <List size={20} /> },
+  const publicNavItems = [
+    { path: filaNavPath, label: filaNavLabel, icon: <List size={20} /> },
     { path: "/faq", label: "Ayuda", icon: <HelpCircle size={20} /> },
     { path: "/chatbot", label: "Asistente", icon: <MessageCircle size={20} /> },
   ];
+  const adminNavItems = [
+    { path: "/admin/homeAdmin", label: "Turnos", icon: <LayoutDashboard size={20} /> },
+    { path: "/admin/dashboard", label: "Dashboard", icon: <BarChart3 size={20} /> },
+    { path: "/admin/faqs", label: "FAQs", icon: <HelpCircle size={20} /> },
+  ];
+  const navItems = isAdminRoute ? adminNavItems : publicNavItems;
+  const mobileHomePath = isAdminRoute ? "/admin/homeAdmin" : "/";
+  const mobileHomeLabel = isAdminRoute ? "Panel" : "Inicio";
+  const logoHomePath = isAdminRoute ? "/admin/homeAdmin" : "/";
 
   return (
     // CAMBIO IMPORTANTE AQUÍ ABAJO:
@@ -28,7 +42,7 @@ const PublicLayout = () => {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           
           {/* Logo y Home */}
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <Link to={logoHomePath} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <img src={logoUTN} alt="UTN Logo" className="h-8 w-auto" />
             {/* <span className="font-bold text-lg hidden sm:block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Fila Virtual
@@ -81,9 +95,9 @@ const PublicLayout = () => {
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-around py-3 z-50 safe-area-pb">
-         <Link to="/" className={`flex flex-col items-center gap-1 ${location.pathname === "/" ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`}>
+         <Link to={mobileHomePath} className={`flex flex-col items-center gap-1 ${location.pathname === mobileHomePath ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`}>
             <Home size={24} />
-            <span className="text-[10px]">Inicio</span>
+            <span className="text-[10px]">{mobileHomeLabel}</span>
          </Link>
          {navItems.map((item) => (
             <Link 

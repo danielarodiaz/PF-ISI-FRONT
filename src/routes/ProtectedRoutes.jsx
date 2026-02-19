@@ -10,11 +10,23 @@ const ProtectedRoutes = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  console.log("[admin-debug][ProtectedRoutes] render", {
+    path: location.pathname,
+    isLoading,
+    isAuthenticated,
+    hasToken: !!localStorage.getItem("token"),
+  });
+
   useEffect(() => {
     const checkToken = async () => {
       const token = localStorage.getItem("token");
+      console.log("[admin-debug][ProtectedRoutes] checkToken:start", {
+        path: location.pathname,
+        hasToken: !!token,
+      });
       
       if (!token) {
+        console.log("[admin-debug][ProtectedRoutes] checkToken:no-token");
         setIsAuthenticated(false);
         setIsLoading(false);
         return;
@@ -22,6 +34,9 @@ const ProtectedRoutes = ({ children }) => {
 
       try {
         const valido = await verificarToken(token);
+        console.log("[admin-debug][ProtectedRoutes] checkToken:response", {
+          valido,
+        });
         
         if (!valido) {
           Swal.fire({
@@ -35,9 +50,11 @@ const ProtectedRoutes = ({ children }) => {
           //localStorage.removeItem("token");
           setIsAuthenticated(false);
         } else {
+          console.log("[admin-debug][ProtectedRoutes] checkToken:authenticated");
           setIsAuthenticated(true);
         }
-      } catch {
+      } catch (error) {
+        console.error("[admin-debug][ProtectedRoutes] checkToken:error", error);
         Swal.fire({
           icon: "error",
           title: "Oops...",
@@ -50,6 +67,7 @@ const ProtectedRoutes = ({ children }) => {
         //localStorage.removeItem("token");
         setIsAuthenticated(false);
       } finally {
+        console.log("[admin-debug][ProtectedRoutes] checkToken:finally");
         setIsLoading(false);
       }
     };
@@ -58,14 +76,17 @@ const ProtectedRoutes = ({ children }) => {
   }, [location.pathname, navigate]); // Re-verify when path changes in protected routes
 
   if (isLoading) {
+    console.log("[admin-debug][ProtectedRoutes] loading-screen");
     // You could return a loading spinner here
     return <div className="text-center py-5">Verificando acceso...</div>;
   }
 
   if (!isAuthenticated) {
+    console.log("[admin-debug][ProtectedRoutes] redirect-login");
     return <Navigate to="/loginAdmin" />;
   }
 
+  console.log("[admin-debug][ProtectedRoutes] allow-children");
   return children;
 };
 

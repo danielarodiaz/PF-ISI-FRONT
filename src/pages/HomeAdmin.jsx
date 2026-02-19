@@ -16,6 +16,20 @@ const HomeAdmin = () => {
   const [turnoActual, setTurnoActual] = useState(null);
   const [atendiendo, setAtendiendo] = useState(false);
   const navigate = useNavigate();
+  const pendientesCount = fila.filter((item) => !item.atendiendo && !item.atendido).length;
+
+  useEffect(() => {
+    document.title = pendientesCount > 0
+      ? `(${pendientesCount}) Admin Turnos | InfoTrack`
+      : "Admin Turnos | InfoTrack";
+  }, [pendientesCount]);
+
+  console.log("[admin-debug][HomeAdmin] render", {
+    path: window.location.pathname,
+    filaCount: fila.length,
+    atendiendo,
+    hasTurnoActual: !!turnoActual,
+  });
 
   // --- LÓGICA DE DATOS ---
   const fetchFila = async () => {
@@ -42,6 +56,7 @@ const HomeAdmin = () => {
   };
 
 useEffect(() => {
+  console.log("[admin-debug][HomeAdmin] useEffect:init");
   const inicializarPanel = async () => {
     await fetchFila();
 
@@ -119,7 +134,7 @@ useEffect(() => {
     }).then((result) => {
       if (result.isConfirmed) {
         localStorage.removeItem("token");
-        navigate("/loginadmin");
+        navigate("/loginAdmin");
       }
     });
   };

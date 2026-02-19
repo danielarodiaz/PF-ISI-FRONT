@@ -1,10 +1,30 @@
 import { Play, CheckCircle, Clock, FileText } from "lucide-react";
 import { formatInUserTimeZone } from "../helpers/dateTime";
+import Swal from "sweetalert2";
 
 const TableFila = ({ fila, onAtenderTurno }) => {
   
   const formatFecha = (fecha) => {
     return formatInUserTimeZone(fecha, { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const handleConfirmAtender = async (turno) => {
+    const result = await Swal.fire({
+      title: `¿Atender ${turno.turno}?`,
+      text: "Este turno pasará al estado En ventanilla.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, atender",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#2563eb",
+      cancelButtonColor: "#64748b",
+      background: "#1e293b",
+      color: "#fff",
+    });
+
+    if (result.isConfirmed) {
+      onAtenderTurno(turno);
+    }
   };
 
   return (
@@ -98,7 +118,7 @@ const TableFila = ({ fila, onAtenderTurno }) => {
                     ) : (
                       /* ESTADO 1: PENDIENTE (Azul) - Se mantiene igual */
                       <button 
-                        onClick={() => onAtenderTurno(turno)}
+                        onClick={() => handleConfirmAtender(turno)}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow-sm shadow-blue-200 dark:shadow-none transition-all hover:scale-105 active:scale-95"
                       >
                         <Play size={14} fill="currentColor" /> Atender

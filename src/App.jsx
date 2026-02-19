@@ -13,8 +13,6 @@ import ChatbotScreen from "./pages/ChatbotScreen";
 import FaqScreen from "./pages/FaqScreen";
 import WhatsAppScreen from "./pages/WhatsAppScreen";
 import LoginAdmin from "./pages/LoginAdmin";
-import DashboardMetrics from "./pages/DashboardMetrics";
-import FaqsAdmin from "./pages/FaqsAdmin";
 
 
 // Rutas Protegidas (Admin)
@@ -27,6 +25,13 @@ function App() {
   const rawBasePath = import.meta.env.VITE_BASE_PATH || "/";
   const routerBaseName =
     rawBasePath === "/" ? "/" : rawBasePath.replace(/\/+$/, "");
+
+  console.log("[admin-debug][App] render", {
+    path: window.location.pathname,
+    routerBaseName,
+    hasToken: !!localStorage.getItem("token"),
+    loginState: login,
+  });
 
   const cambiarLogin = () => {
     const token = localStorage.getItem("token");
@@ -47,8 +52,14 @@ function App() {
             <Route path="/chatbot" element={<ChatbotScreen />} />
             <Route path="/faq" element={<FaqScreen />} />
             <Route path="/whatsapp" element={<WhatsAppScreen />} />
-            <Route path="/admin/dashboard" element={<DashboardMetrics />} />
-            <Route path="/admin/faqs" element={<FaqsAdmin />} />
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoutes login={login}>
+                  <RoutesApp />
+                </ProtectedRoutes>
+              }
+            />
 
             
           </Route>
@@ -59,16 +70,6 @@ function App() {
             element={<LoginAdmin cambiarLogin={cambiarLogin} />} 
           />
 
-          {/* RUTAS ADMINISTRADOR (Protegidas) */}
-          <Route
-            path="/admin/*"
-            element={
-              <ProtectedRoutes login={login}>
-                <RoutesApp />
-              </ProtectedRoutes>
-            }
-          />
-          
           {/* Redirección por defecto a Home */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
