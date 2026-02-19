@@ -4,13 +4,17 @@ const fallbackRandomId = () =>
   `dev-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
 
 export const getOrCreateDeviceId = () => {
-  const existing = localStorage.getItem(DEVICE_ID_KEY);
-  if (existing) return existing;
+  try {
+    const existing = localStorage.getItem(DEVICE_ID_KEY);
+    if (existing) return existing;
 
-  const generated = typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : fallbackRandomId();
+    const generated = typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : fallbackRandomId();
 
-  localStorage.setItem(DEVICE_ID_KEY, generated);
-  return generated;
+    localStorage.setItem(DEVICE_ID_KEY, generated);
+    return generated;
+  } catch {
+    return fallbackRandomId();
+  }
 };

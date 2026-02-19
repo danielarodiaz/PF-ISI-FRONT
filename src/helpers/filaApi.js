@@ -58,9 +58,12 @@ export const postTurnoEnFila = async (legajo, idTramite, deviceId) => {
     if (error?.code === SERVICE_ERROR_CODES.CONFIG_MISSING) {
       throw error;
     }
-    const backendMessage = error?.response?.data;
+    const backendPayload = error?.response?.data;
+    const backendMessage = typeof backendPayload === "string"
+      ? backendPayload
+      : backendPayload?.detail || backendPayload?.message || "";
     if (typeof backendMessage === "string" && backendMessage.trim().length > 0) {
-      throw new Error(backendMessage);
+      throw new Error(backendMessage.trim());
     }
     throw createServiceError(
       SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
