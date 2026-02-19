@@ -1,7 +1,6 @@
 import { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
-import { initializeDatabase } from "../data/dataFila.js";
 import { getTramites, postTurnoEnFila } from "../helpers/filaApi.js";
 import { isConfigMissingError } from "../helpers/serviceErrors";
 import { saveTurnoActivo } from "../helpers/turnoStorage";
@@ -24,7 +23,6 @@ const FilaScreen = () => {
     : "w-full py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-200 dark:shadow-none transition-all hover:-translate-y-1 flex items-center justify-center gap-2";
 
   useEffect(() => {
-    initializeDatabase();
     const fetchTramites = async () => {
       setLoadingTramites(true);
       setServiceError("");
