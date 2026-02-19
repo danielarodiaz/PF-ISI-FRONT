@@ -39,6 +39,10 @@ export const sendMessageToChatbot = async (message, historial = [], conversation
       const detail = error?.response?.data?.detail || "Solicitud inválida al asistente.";
       throw createServiceError(SERVICE_ERROR_CODES.BAD_REQUEST, detail, error);
     }
+    if (error?.response?.status === 429) {
+      const detail = error?.response?.data?.detail || "Demasiadas solicitudes al asistente. Intenta más tarde.";
+      throw createServiceError(SERVICE_ERROR_CODES.TOO_MANY_REQUESTS, detail, error);
+    }
     throw createServiceError(
       SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
       "El servicio del asistente no está disponible.",
@@ -69,9 +73,25 @@ export const sendMessageToChatbotStream = async (
     });
 
     if (!response.ok || !response.body) {
+      let detail = "El servicio del asistente no está disponible.";
+      try {
+        const errorPayload = await response.json();
+        if (typeof errorPayload?.detail === "string" && errorPayload.detail.trim()) {
+          detail = errorPayload.detail.trim();
+        }
+      } catch {
+        // keep default detail
+      }
+
+      if (response.status === 400) {
+        throw createServiceError(SERVICE_ERROR_CODES.BAD_REQUEST, detail);
+      }
+      if (response.status === 429) {
+        throw createServiceError(SERVICE_ERROR_CODES.TOO_MANY_REQUESTS, detail);
+      }
       throw createServiceError(
         SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
-        "El servicio del asistente no está disponible."
+        detail
       );
     }
 
@@ -153,6 +173,9 @@ export const sendMessageToChatbotStream = async (
       throw error;
     }
     if (error?.code === SERVICE_ERROR_CODES.BAD_REQUEST) {
+      throw error;
+    }
+    if (error?.code === SERVICE_ERROR_CODES.TOO_MANY_REQUESTS) {
       throw error;
     }
     throw createServiceError(

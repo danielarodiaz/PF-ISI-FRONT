@@ -1,7 +1,7 @@
 import { useEffect,useState,useRef } from "react";
 import { sendMessageToChatbot, sendMessageToChatbotStream } from "../helpers/chatbotApi";
 import { verificarConexionChat } from "../helpers/verificationConnection";
-import { SERVICE_ERROR_CODES, isBadRequestError, isConfigMissingError } from "../helpers/serviceErrors";
+import { SERVICE_ERROR_CODES, isBadRequestError, isConfigMissingError, isTooManyRequestsError } from "../helpers/serviceErrors";
 import { Send, Bot, User, Loader2 } from "lucide-react"; // Iconos
 import PageLayout from "../components/layout/PageLayout";
 
@@ -197,6 +197,8 @@ const ChatbotScreen = () => {
         console.error("Error al enviar mensaje:", fallbackError);
         const unavailableMessage = isConfigMissingError(fallbackError)
           ? "El asistente no está configurado. Contacta al administrador."
+          : isTooManyRequestsError(fallbackError)
+            ? fallbackError.message
           : isBadRequestError(fallbackError)
             ? fallbackError.message
             : "Lo siento, tuve un problema de conexión. Intenta de nuevo.";
