@@ -21,6 +21,6 @@ COPY --from=build /app/dist ./
 
 EXPOSE 80
 
-HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD wget -q -O /dev/null http://localhost/health || exit 1
+HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD curl -fsS http://127.0.0.1/health > /dev/null || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
