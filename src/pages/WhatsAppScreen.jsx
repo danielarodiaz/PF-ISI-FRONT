@@ -10,6 +10,31 @@ const WhatsAppScreen = () => {
   const navigate = useNavigate();
   const [telefono, setTelefono] = useState("");
 
+  const normalizeForWhatsapp = (input) => {
+    if (!input || !input.trim()) return "";
+
+    const digits = input.replace(/\D/g, "");
+    if (!digits) return "";
+
+    if (digits.startsWith("54") && digits.length === 14) {
+      return digits;
+    }
+
+    if (digits.length === 10) {
+      const area = digits.slice(0, 3);
+      const resto = digits.slice(3);
+      return `54${area}15${resto}`;
+    }
+
+    if (digits.startsWith("549") && digits.length === 13) {
+      const area = digits.slice(3, 6);
+      const resto = digits.slice(6);
+      return `54${area}15${resto}`;
+    }
+
+    return "";
+  };
+
   const handleContinue = async (acepta) => {
     // 1. Si el usuario no acepta, nos vamos directo
     if (!acepta) {
@@ -17,16 +42,17 @@ const WhatsAppScreen = () => {
         return;
     }
 
-    // 2. Si acepta, validamos el formato (Regla: 10 dígitos, sin 0 ni 15)
-    // Ejemplo válido: 3815616705
-    const regexValido = /^[1-9]\d{9}$/; 
+    // 2. Si acepta, validamos/normalizamos según la misma lógica del backend
+    const telefonoNormalizado = normalizeForWhatsapp(telefono);
 
-    if (!regexValido.test(telefono)) {
+    if (!telefonoNormalizado) {
         Swal.fire({
             title: "Formato incorrecto",
-            html: `El número debe tener <b>10 dígitos</b>:<br/>
-                   Código de área (sin 0) + número (sin 15).<br/><br/>
-                   <i>Ejemplo: 3815616705</i>`,
+            html: `Ingresa un formato válido de WhatsApp.<br/><br/>
+                   Ejemplos aceptados:<br/>
+                   <b>3815616705</b><br/>
+                   <b>+5493816790844</b><br/>
+                   <b>5493816790844</b>`,
             icon: "warning",
             confirmButtonColor: "#16a34a",
             background: '#1e293b',
@@ -41,9 +67,9 @@ const WhatsAppScreen = () => {
         const turnoRef = getTurnoActivoRef();
 
         if (turnoData?.idTurno) {
-          await registrarTelefonoEnTurno(turnoData.idTurno, telefono);
+          await registrarTelefonoEnTurno(turnoData.idTurno, telefonoNormalizado);
         } else if (turnoRef?.publicToken) {
-          await registrarTelefonoEnTurnoPorToken(turnoRef.publicToken, telefono);
+          await registrarTelefonoEnTurnoPorToken(turnoRef.publicToken, telefonoNormalizado);
         }
 
         console.log("Teléfono vinculado con éxito");
