@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import TableFila from "../components/TableFila";
-import { getFila, atenderTurnoConId, putFinalizarAtencion, getTurnoEnVentanilla, createAdminFilaStream } from "../helpers/filaApi";
+import { atenderTurnoConId, putFinalizarAtencion, createAdminFilaStream } from "../helpers/filaApi";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import confetti from "canvas-confetti";
@@ -40,7 +40,6 @@ const HomeAdmin = () => {
   const [turnoActual, setTurnoActual] = useState(null);
   const [atendiendo, setAtendiendo] = useState(false);
   const streamRef = useRef(null);
-  const lastFallbackFetchRef = useRef(0);
   const navigate = useNavigate();
   const pendientesCount = fila.filter((item) => !item.atendiendo && !item.atendido).length;
 
@@ -49,30 +48,6 @@ const HomeAdmin = () => {
       ? `(${pendientesCount}) Admin Turnos | InfoTrack`
       : "Admin Turnos | InfoTrack";
   }, [pendientesCount]);
-
-  // --- LÓGICA DE DATOS ---
-  const fetchFila = async () => {
-    try {
-      const filaDb = await getFila();
-      const filaTransformada = filaDb.map((item) => ({
-        id: item.idTurno,
-        legajo: item.turno.legajo,
-        tramite: item.turno.tramite.descripcion,
-        fecha: item.turno.fechaDeCreacion,
-        turno: item.turno.nombreTurno,
-        atendiendo: item.turno.estadoTurno.descripcion === "Atendiendo",
-        atendido: item.turno.estadoTurno.descripcion === "Atendido",
-      }));
-      setFila(filaTransformada);
-    } catch (error) {
-      if (error.response && error.response.status === 401) {
-        cerrarSesionLocal();
-        navigate("/loginAdmin");
-        Swal.fire("Error", "Sesión expirada. Por favor, inicie sesión nuevamente.", "error");
-      }
-      console.error("Error al obtener la fila:", error);
-    }
-  };
 
   const mapTurno = (turnoDb) => {
     if (!turnoDb) return null;
@@ -99,33 +74,6 @@ const HomeAdmin = () => {
     }));
 
 useEffect(() => {
-  const inicializarPanel = async () => {
-    await fetchFila();
-
-    try {
-      const turnoDb = await getTurnoEnVentanilla();
-      
-      if (turnoDb) {
-        const turnoMapeado = {
-          id: turnoDb.idTurno,
-          legajo: turnoDb.legajo,
-          tramite: turnoDb.tramite.descripcion,
-          fecha: turnoDb.fechaDeCreacion,
-          turno: turnoDb.nombreTurno,
-          atendiendo: true,
-          atendido: false,
-        };
-
-        setTurnoActual(turnoMapeado);
-        setAtendiendo(true);
-      }
-    } catch {
-      // No hay turno en ventanilla.
-    }
-  };
-
-  inicializarPanel();
-
   try {
     const stream = createAdminFilaStream();
     streamRef.current = stream;
@@ -142,21 +90,14 @@ useEffect(() => {
     });
 
     // EventSource ya reintenta solo; evitamos cerrar/reconectar manualmente para no generar flood.
-    stream.onerror = async () => {
-      const now = Date.now();
-      if (now - lastFallbackFetchRef.current < 15000) {
-        return;
-      }
-      lastFallbackFetchRef.current = now;
-
-      try {
-        await fetchFila();
-      } catch {
-        // no-op
-      }
-    };
+    stream.onerror = () => {};
   } catch (error) {
     console.error("No se pudo iniciar stream SSE admin:", error);
+    if (error.response && error.response.status === 401) {
+      cerrarSesionLocal();
+      navigate("/loginAdmin");
+      Swal.fire("Error", "Sesión expirada. Por favor, inicie sesión nuevamente.", "error");
+    }
   }
 
   return () => {
@@ -172,8 +113,6 @@ useEffect(() => {
       await atenderTurnoConId(turno.id);
       setTurnoActual(turno);
       setAtendiendo(true);
-
-      await fetchFila();
       
     } catch {
       Swal.fire("Error", "No se pudo atender el turno. Verifique si ya hay uno en atención.", "error");
@@ -187,8 +126,6 @@ useEffect(() => {
         setAtendiendo(false);
         setTurnoActual(null);
         shootSuccessConfetti();
-
-        await fetchFila();
         
       } catch (error) {
         console.error("Error al finalizar:", error);
