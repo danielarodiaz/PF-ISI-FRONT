@@ -154,6 +154,8 @@ const FilaScreen = () => {
         setServiceError(`${error.message} Si recargaste o cambiaste navegador, vuelve con el link de tu turno activo.`);
       } else if (error?.message?.includes("legajo ya se encuentra en la fila")) {
         setErrorLegajo(error.message);
+      } else if (error?.message) {
+        setServiceError(error.message);
       } else {
         setServiceError("No se pudo solicitar el turno. Intenta nuevamente en unos minutos.");
       }
