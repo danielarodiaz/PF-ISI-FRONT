@@ -3,6 +3,7 @@ import TableFila from "../components/TableFila";
 import { getFila, atenderTurnoConId, putFinalizarAtencion, getTurnoEnVentanilla, createAdminFilaStream } from "../helpers/filaApi";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import confetti from "canvas-confetti";
 import { cerrarSesion, cerrarSesionLocal } from "../helpers/login";
 import { 
   RefreshCw, 
@@ -11,6 +12,28 @@ import {
   BarChart2, 
   MessageCircleQuestion 
 } from "lucide-react";
+
+const shootSuccessConfetti = () => {
+  const count = 180;
+  const defaults = {
+    origin: { y: 0.75 },
+    spread: 80,
+    ticks: 220,
+    scalar: 1.1,
+    zIndex: 2000,
+  };
+
+  confetti({
+    ...defaults,
+    particleCount: Math.floor(count * 0.6),
+    origin: { x: 0.15, y: 0.75 },
+  });
+  confetti({
+    ...defaults,
+    particleCount: Math.floor(count * 0.4),
+    origin: { x: 0.85, y: 0.75 },
+  });
+};
 
 const HomeAdmin = () => {
   const [fila, setFila] = useState([]);
@@ -168,6 +191,7 @@ useEffect(() => {
         await putFinalizarAtencion();
         setAtendiendo(false);
         setTurnoActual(null);
+        shootSuccessConfetti();
 
         await fetchFila();
         
