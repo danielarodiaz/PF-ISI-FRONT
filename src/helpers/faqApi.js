@@ -5,7 +5,7 @@ const API_BASE_URL = CHATBOT_URL;
 
 export const getFaqs = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/faq`, {
+    const response = await axios.get(`${API_BASE_URL}/faq/`, {
       headers: {
         "Content-Type": "application/json",
       },
