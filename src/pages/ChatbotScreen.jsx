@@ -18,7 +18,7 @@ const MAX_HISTORY_MESSAGES = Number.isFinite(ENV_MAX_HISTORY_MESSAGES) && ENV_MA
 const ENV_MAX_MESSAGE_CHARS = Number(import.meta.env.VITE_CHATBOT_MAX_MESSAGE_CHARS);
 const MAX_MESSAGE_CHARS = Number.isFinite(ENV_MAX_MESSAGE_CHARS) && ENV_MAX_MESSAGE_CHARS > 0
   ? Math.floor(ENV_MAX_MESSAGE_CHARS)
-  : 350;
+  : 100;
 const TRANSIENT_SYSTEM_MESSAGES = new Set([
   "El asistente no está disponible en este momento.",
   "El asistente no está configurado. Contacta al administrador.",
