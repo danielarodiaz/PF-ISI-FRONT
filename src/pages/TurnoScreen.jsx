@@ -7,7 +7,7 @@ import PageLayout from "../components/layout/PageLayout";
 const TurnoPage = () => {
   const navigate = useNavigate();
   
-  const [turnoActual, setTurnoActual] = useState("");
+  const [numeroTurno, setNumeroTurno] = useState("");
   const [esTurno, setEsTurno] = useState(false);
   const [personasAdelante, setPersonasAdelante] = useState(5);
   const [tiempoEspera, setTiempoEspera] = useState(10);
@@ -23,8 +23,8 @@ const TurnoPage = () => {
       // sessionStorage.setItem(`turno_${idTurno}`, JSON.stringify(turnoData)); 
       
       setDatosTurno(turnoData);
+      setNumeroTurno(turnoData.nombreTurno);
       fetchPersonasAdelante(turnoData);
-      setTurnoActual(turnoData.nombreTurno);
     } catch (error) {
       console.error("Error obteniendo turno:", error);
     }
@@ -48,15 +48,24 @@ const TurnoPage = () => {
       // -----------------------
 
       if (personas === 0 && turnoData.idEstadoTurno == 1) {
+        setEsTurno(false);
         setPorAtender(true);
-        setTurnoActual("Te están por atender");
       } else if (turnoData.idEstadoTurno == 2) {
         setEsTurno(true);
-        setTurnoActual(`¡Es tu turno ${turnoData.nombreTurno}!`);
+        setPorAtender(false);
+      } else {
+        setEsTurno(false);
+        setPorAtender(false);
       }
     } catch (error) {
       console.error("Error:", error);
     }
+  };
+
+  const getTituloPrincipal = () => {
+    if (esTurno) return "¡Es tu turno!";
+    if (porAtender) return "Te están por atender";
+    return "Tu número es";
   };
 
   useEffect(() => {
@@ -100,9 +109,9 @@ const TurnoPage = () => {
         
         {/* Card Principal */}
         <div className={`transform transition-all duration-500 hover:scale-105 rounded-3xl p-8 shadow-2xl text-white ${getStatusColor()}`}>
-          <h2 className="text-xl opacity-90 mb-2 font-medium">Tu número es</h2>
+          <h2 className="text-xl opacity-90 mb-2 font-medium">{getTituloPrincipal()}</h2>
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter drop-shadow-lg">
-            {turnoActual}
+            {numeroTurno}
           </h1>
           {esTurno && (
              <p className="mt-4 text-lg font-semibold bg-white/20 py-2 px-4 rounded-full inline-block backdrop-blur-sm animate-pulse">

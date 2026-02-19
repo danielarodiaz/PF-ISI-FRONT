@@ -1,11 +1,10 @@
 import { Play, CheckCircle, Clock, FileText } from "lucide-react";
+import { formatInUserTimeZone } from "../helpers/dateTime";
 
 const TableFila = ({ fila, onAtenderTurno }) => {
   
   const formatFecha = (fecha) => {
-    if (!fecha) return "-";
-    const date = new Date(fecha);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return formatInUserTimeZone(fecha, { hour: "2-digit", minute: "2-digit" });
   };
 
   return (

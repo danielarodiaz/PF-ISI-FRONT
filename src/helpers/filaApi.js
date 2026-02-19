@@ -1,7 +1,17 @@
 import axios from "axios";
 import { BACKEND_URL } from "./config";
+import { createServiceError, SERVICE_ERROR_CODES } from "./serviceErrors";
 
 const API_BASE_URL = BACKEND_URL;
+
+const ensureBackendConfigured = () => {
+  if (!API_BASE_URL) {
+    throw createServiceError(
+      SERVICE_ERROR_CODES.CONFIG_MISSING,
+      "El servicio de turnos no está configurado (VITE_API_URL)."
+    );
+  }
+};
  
 // --- REPORTES (DASHBOARD) ---
 export const getDatosReportes = async () => {
@@ -35,6 +45,7 @@ export const getFila = async () => {
 
 export const postTurnoEnFila = async (legajo, idTramite) => {
   try {
+    ensureBackendConfigured();
     const turnoData = {
       legajo: legajo,
       idTramite: idTramite
@@ -43,7 +54,14 @@ export const postTurnoEnFila = async (legajo, idTramite) => {
     return response.data;
   } catch (error) {
     console.error("Error posting turno:", error);
-    throw error;
+    if (error?.code === SERVICE_ERROR_CODES.CONFIG_MISSING) {
+      throw error;
+    }
+    throw createServiceError(
+      SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
+      "El servicio de turnos no está disponible.",
+      error
+    );
   }
 };
 
@@ -145,10 +163,24 @@ export const registrarTelefonoEnTurno = async (idTurno, telefono) => {
 // --- TRAMITES ---
 export const getTramites = async () => {
   try {
+    ensureBackendConfigured();
     const response = await axios.get(`${API_BASE_URL}/api/Tramite`);
+    if (!Array.isArray(response.data)) {
+      throw createServiceError(
+        SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
+        "Formato de respuesta inválido para trámites."
+      );
+    }
     return response.data;
   } catch (error) {
     console.error("Error fetching tramites:", error);
-    throw error;
+    if (error?.code === SERVICE_ERROR_CODES.CONFIG_MISSING) {
+      throw error;
+    }
+    throw createServiceError(
+      SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
+      "El servicio de turnos no está disponible.",
+      error
+    );
   }
 };
