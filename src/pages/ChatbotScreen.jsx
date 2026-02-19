@@ -11,12 +11,16 @@ const ENV_MAX_USER_MESSAGES = Number(import.meta.env.VITE_CHATBOT_MAX_USER_MESSA
 const MAX_USER_MESSAGES = Number.isFinite(ENV_MAX_USER_MESSAGES) && ENV_MAX_USER_MESSAGES > 0
   ? Math.floor(ENV_MAX_USER_MESSAGES)
   : 30;
+const ENV_MAX_HISTORY_MESSAGES = Number(import.meta.env.VITE_CHATBOT_MAX_HISTORY_MESSAGES);
+const MAX_HISTORY_MESSAGES = Number.isFinite(ENV_MAX_HISTORY_MESSAGES) && ENV_MAX_HISTORY_MESSAGES > 0
+  ? Math.floor(ENV_MAX_HISTORY_MESSAGES)
+  : 12;
 const TRANSIENT_SYSTEM_MESSAGES = new Set([
   "El asistente no está disponible en este momento.",
   "El asistente no está configurado. Contacta al administrador.",
 ]);
 
-const trimHistoryWindow = (history, maxUserMessages) => {
+const trimHistoryWindow = (history, maxUserMessages, maxHistoryMessages = MAX_HISTORY_MESSAGES) => {
   if (!Array.isArray(history) || history.length === 0) return [];
 
   let userCount = 0;
@@ -32,7 +36,11 @@ const trimHistoryWindow = (history, maxUserMessages) => {
     }
   }
 
-  return history.slice(startIndex);
+  const byUserWindow = history.slice(startIndex);
+  if (maxHistoryMessages > 0 && byUserWindow.length > maxHistoryMessages) {
+    return byUserWindow.slice(-maxHistoryMessages);
+  }
+  return byUserWindow;
 };
 
 const loadChatSession = () => {
@@ -150,7 +158,8 @@ const ChatbotScreen = () => {
     setIsLoading(true);
     const baseHistory = trimHistoryWindow(
       chatHistory.filter((msg) => !isTransientSystemBotMessage(msg)),
-      MAX_USER_MESSAGES
+      MAX_USER_MESSAGES,
+      MAX_HISTORY_MESSAGES
     );
     const nextHistory = [
       ...baseHistory,
