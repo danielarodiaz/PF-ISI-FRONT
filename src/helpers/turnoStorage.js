@@ -7,11 +7,13 @@ export const saveTurnoActivo = (turno) => {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(turno));
 
   if (turno.publicToken) {
+    const existingRef = getTurnoActivoRef();
     const ref = {
       publicToken: turno.publicToken,
       idTurno: turno.idTurno,
       legajo: turno.legajo ?? null,
       nombreTurno: turno.nombreTurno ?? null,
+      initialPersonasAdelante: existingRef?.initialPersonasAdelante ?? null,
       createdAt: new Date().toISOString(),
     };
     localStorage.setItem(LOCAL_REF_KEY, JSON.stringify(ref));
@@ -36,6 +38,13 @@ export const getTurnoActivoRef = () => {
   } catch {
     return null;
   }
+};
+
+export const updateTurnoActivoRef = (patch) => {
+  const current = getTurnoActivoRef();
+  if (!current) return;
+  const updated = { ...current, ...patch };
+  localStorage.setItem(LOCAL_REF_KEY, JSON.stringify(updated));
 };
 
 export const clearTurnoActivo = () => {

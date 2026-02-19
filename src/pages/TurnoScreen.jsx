@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { cancelarTurnoPorToken, createTurnoActivoStream } from "../helpers/filaApi";
 import { Users, Clock, LogOut } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";
-import { clearTurnoActivo, getTurnoActivoRef, saveTurnoActivo } from "../helpers/turnoStorage";
+import { clearTurnoActivo, getTurnoActivoRef, saveTurnoActivo, updateTurnoActivoRef } from "../helpers/turnoStorage";
 
 const TurnoPage = () => {
   const navigate = useNavigate();
@@ -16,6 +16,7 @@ const TurnoPage = () => {
   const [datosTurno, setDatosTurno] = useState({ legajo: 0, tramite: "", NombreTurno: "" });
   const [porAtender, setPorAtender] = useState(false);
   const streamRef = useRef(null);
+  const initialAheadRef = useRef(null);
 
   const applyTurnoSnapshot = (turnoData, personas) => {
     if (!turnoData) {
@@ -27,9 +28,26 @@ const TurnoPage = () => {
     saveTurnoActivo(turnoData);
     setDatosTurno(turnoData);
     setNumeroTurno(turnoData.nombreTurno);
-    setPersonasAdelante(personas ?? 0);
-    setTiempoEspera((personas ?? 0) * 3);
-    setProgreso((( ((personas ?? 0) + 1) - (personas ?? 0)) / ((personas ?? 0) + 1)) * 100);
+    const personasActual = personas ?? 0;
+    if (initialAheadRef.current === null) {
+      const ref = getTurnoActivoRef();
+      const persistedInitial = Number(ref?.initialPersonasAdelante);
+      if (Number.isFinite(persistedInitial) && persistedInitial >= 0) {
+        initialAheadRef.current = persistedInitial;
+      } else {
+        initialAheadRef.current = personasActual;
+        updateTurnoActivoRef({ initialPersonasAdelante: personasActual });
+      }
+    }
+
+    const initialAhead = Math.max(0, Number(initialAheadRef.current ?? personasActual));
+    const denominator = Math.max(1, initialAhead);
+    const progressed = Math.max(0, initialAhead - personasActual);
+    const progresoReal = Math.round((progressed / denominator) * 100);
+
+    setPersonasAdelante(personasActual);
+    setTiempoEspera(personasActual * 3);
+    setProgreso(initialAhead === 0 ? 100 : progresoReal);
 
     if (turnoData.idEstadoTurno === 3 || turnoData.idEstadoTurno === 4) {
       clearTurnoActivo();
