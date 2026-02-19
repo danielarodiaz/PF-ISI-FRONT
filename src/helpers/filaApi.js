@@ -57,12 +57,24 @@ export const postTurnoEnFila = async (legajo, idTramite) => {
     if (error?.code === SERVICE_ERROR_CODES.CONFIG_MISSING) {
       throw error;
     }
+    const backendMessage = error?.response?.data;
+    if (typeof backendMessage === "string" && backendMessage.trim().length > 0) {
+      throw new Error(backendMessage);
+    }
     throw createServiceError(
       SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
       "El servicio de turnos no está disponible.",
       error
     );
   }
+};
+
+export const validarLegajoDisponible = async (legajo) => {
+  ensureBackendConfigured();
+  const response = await axios.get(`${API_BASE_URL}/api/Fila/ValidarLegajoDisponible`, {
+    params: { legajo },
+  });
+  return response.data;
 };
 
 export const personasAdelanteEnLaFila = async (idTurno) => {

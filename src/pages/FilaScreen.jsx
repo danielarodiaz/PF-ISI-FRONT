@@ -1,7 +1,7 @@
-import { useEffect,useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
-import { getTramites, postTurnoEnFila } from "../helpers/filaApi.js";
+import { getTramites, postTurnoEnFila, validarLegajoDisponible } from "../helpers/filaApi.js";
 import { isConfigMissingError } from "../helpers/serviceErrors";
 import { saveTurnoActivo } from "../helpers/turnoStorage";
 import { AlertCircle, CheckCircle } from "lucide-react";
@@ -17,8 +17,12 @@ const FilaScreen = () => {
   const [errorLegajo, setErrorLegajo] = useState("");
   const [loadingTramites, setLoadingTramites] = useState(true);
   const [serviceError, setServiceError] = useState("");
+  const [checkingLegajo, setCheckingLegajo] = useState(false);
+  const legajoValidationRequestRef = useRef(0);
   const isFormDisabled = loadingTramites || Boolean(serviceError);
-  const submitButtonClass = isFormDisabled
+  const hasLegajoError = !noLegajo && Boolean(errorLegajo);
+  const isSubmitDisabled = isFormDisabled || checkingLegajo || hasLegajoError;
+  const submitButtonClass = isSubmitDisabled
     ? "w-full py-3.5 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-200 dark:shadow-none flex items-center justify-center gap-2 opacity-60 cursor-not-allowed"
     : "w-full py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-200 dark:shadow-none transition-all hover:-translate-y-1 flex items-center justify-center gap-2";
 
@@ -52,13 +56,51 @@ const FilaScreen = () => {
     setIndexTramite(selectedIndex);
     setShowWarning(selectedTramite.endsWith("*"));
   };
-  const handleLegajoChange = (e) => {
+  const handleLegajoChange = async (e) => {
     if (isFormDisabled) return;
     const value = e.target.value;
+    const requestId = legajoValidationRequestRef.current + 1;
+    legajoValidationRequestRef.current = requestId;
+
     setLegajo(value);
-    if(value.length > 0 && value.length !== 5){
+    if (value.length === 0) {
+      setErrorLegajo("");
+      setCheckingLegajo(false);
+      return;
+    }
+    if (value.length !== 5) {
       setErrorLegajo("El número de legajo debe tener 5 dígitos. Ingrese nuevamente");
-    } else {
+      setCheckingLegajo(false);
+      return;
+    }
+
+    try {
+      setCheckingLegajo(true);
+      const validation = await validarLegajoDisponible(value);
+      if (legajoValidationRequestRef.current !== requestId) return;
+      if (validation?.disponible) {
+        setErrorLegajo("");
+      } else {
+        setErrorLegajo(validation?.mensaje || "El legajo ya se encuentra en la fila, no se puede sacar 2 turnos");
+      }
+    } catch (error) {
+      if (legajoValidationRequestRef.current !== requestId) return;
+      console.error("Error validando legajo:", error);
+      setErrorLegajo("No se pudo validar el legajo en este momento.");
+    } finally {
+      if (legajoValidationRequestRef.current === requestId) {
+        setCheckingLegajo(false);
+      }
+    }
+  };
+
+  const handleNoLegajoChange = (e) => {
+    if (isFormDisabled) return;
+    const checked = e.target.checked;
+    setNoLegajo(checked);
+    if (checked) {
+      legajoValidationRequestRef.current += 1;
+      setLegajo("");
       setErrorLegajo("");
     }
   };
@@ -66,7 +108,9 @@ const FilaScreen = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isFormDisabled) return;
-    if(!noLegajo && legajo.length !== 5) return;
+    if (checkingLegajo) return;
+    if (!noLegajo && legajo.length !== 5) return;
+    if (hasLegajoError) return;
     try {
       const legajoAEnviar = noLegajo ? null : legajo;
       const turnoData = await postTurnoEnFila(legajoAEnviar, indexTramite);
@@ -76,6 +120,8 @@ const FilaScreen = () => {
       console.error("Error creando turno:", error);
       if (isConfigMissingError(error)) {
         setServiceError("El módulo de turnos no está configurado. Contacta al administrador.");
+      } else if (error?.message?.includes("legajo ya se encuentra en la fila")) {
+        setErrorLegajo(error.message);
       } else {
         setServiceError("No se pudo solicitar el turno. Intenta nuevamente en unos minutos.");
       }
@@ -95,16 +141,17 @@ const FilaScreen = () => {
             Número de Legajo
           </label>
           
-          <input
-            type="number"
-            required={!noLegajo}
+            <input
+              type="number"
+              required={!noLegajo}
             className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all disabled:opacity-50 disabled:bg-slate-200 dark:disabled:bg-slate-700"
             placeholder="Ej: 50481"
-            maxLength="5"
-            value={legajo}
-            onChange={handleLegajoChange}
-            disabled={noLegajo || isFormDisabled}
-          />
+              maxLength="5"
+              value={legajo}
+              onChange={handleLegajoChange}
+              disabled={noLegajo || isFormDisabled}
+            />
+          {checkingLegajo && !noLegajo && <p className="text-slate-500 text-xs mt-1 font-medium">Validando legajo...</p>}
           {errorLegajo && !noLegajo && <p className="text-red-500 text-xs mt-1 font-medium">{errorLegajo}</p>}
         </div>
 
@@ -117,14 +164,7 @@ const FilaScreen = () => {
               className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
               checked={noLegajo}
               disabled={isFormDisabled}
-              onChange={(e) => {
-                if (isFormDisabled) return;
-                setNoLegajo(e.target.checked);
-                if(e.target.checked) {
-                  setLegajo(""); // Limpiamos legajo si marca que no tiene
-                  setErrorLegajo("");
-                }
-              }}
+              onChange={handleNoLegajoChange}
             />
             <label htmlFor="noLegajo" className="text-sm font-medium text-blue-800 dark:text-blue-200 cursor-pointer select-none">
               No tengo número de legajo
@@ -180,7 +220,7 @@ const FilaScreen = () => {
           {/* CORRECCIÓN 3: dark:shadow-none para evitar sombras blancas brillantes */}
           <button
             type="submit"
-            disabled={isFormDisabled}
+            disabled={isSubmitDisabled}
             className={submitButtonClass}
           >
             Confirmar Turno
