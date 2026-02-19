@@ -4,7 +4,8 @@ import filavirtual from "../assets/filaVirtual.jpg"; // Asegúrate de tener esta
 import FAQ from "../assets/FAQ.png";
 import chatbot from "../assets/chatbot.png";
 import { Clock, Info, MapPin } from "lucide-react"; // Iconos nuevos
-import { getTurnoActivo, getTurnoActivoRef } from "../helpers/turnoStorage";
+import { clearTurnoActivo, getTurnoActivoRef } from "../helpers/turnoStorage";
+import { getTurnoActivoPorToken } from "../helpers/filaApi";
 
 // Componente de Tarjeta reutilizable (lo que ya tenías pero más limpio)
 const CardOption = ({ to, img, title, subtitle, colorInfo }) => (
@@ -22,18 +23,43 @@ const MainScreen = () => {
   // Simulación de estado (esto vendría de tu lógica real o API)
   const [turnoActivo, setTurnoActivo] = useState(null); 
   const estaAbierto = true; // Deberías calcular esto con la hora actual
+  const ACTIVE_TURNO_STATES = new Set([1, 2]);
 
   useEffect(() => {
-    const turno = getTurnoActivo();
-    if (turno) {
-      setTurnoActivo(turno);
-      return;
-    }
+    let isMounted = true;
+    const hydrateTurno = async () => {
+      const turnoRef = getTurnoActivoRef();
+      if (!turnoRef?.publicToken) {
+        clearTurnoActivo();
+        if (isMounted) setTurnoActivo(null);
+        return;
+      }
 
-    const turnoRef = getTurnoActivoRef();
-    if (turnoRef?.publicToken) {
-      setTurnoActivo({ nombreTurno: turnoRef.nombreTurno || "Turno activo", publicToken: turnoRef.publicToken });
-    }
+      try {
+        const turnoServer = await getTurnoActivoPorToken(turnoRef.publicToken);
+        const isActive = ACTIVE_TURNO_STATES.has(turnoServer?.idEstadoTurno);
+        if (!isActive) {
+          clearTurnoActivo();
+          if (isMounted) setTurnoActivo(null);
+          return;
+        }
+
+        if (isMounted) {
+          setTurnoActivo({
+            nombreTurno: turnoServer?.nombreTurno || turnoRef.nombreTurno || "Turno activo",
+            publicToken: turnoRef.publicToken,
+          });
+        }
+      } catch {
+        clearTurnoActivo();
+        if (isMounted) setTurnoActivo(null);
+      }
+    };
+
+    hydrateTurno();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
