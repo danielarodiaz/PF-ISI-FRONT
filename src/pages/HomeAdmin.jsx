@@ -3,6 +3,7 @@ import TableFila from "../components/TableFila";
 import { getFila, atenderTurnoConId, putFinalizarAtencion, getTurnoEnVentanilla } from "../helpers/filaApi";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { cerrarSesion, cerrarSesionLocal } from "../helpers/login";
 import { 
   RefreshCw, 
   CheckSquare, 
@@ -24,13 +25,6 @@ const HomeAdmin = () => {
       : "Admin Turnos | InfoTrack";
   }, [pendientesCount]);
 
-  console.log("[admin-debug][HomeAdmin] render", {
-    path: window.location.pathname,
-    filaCount: fila.length,
-    atendiendo,
-    hasTurnoActual: !!turnoActual,
-  });
-
   // --- LÓGICA DE DATOS ---
   const fetchFila = async () => {
     try {
@@ -47,7 +41,7 @@ const HomeAdmin = () => {
       setFila(filaTransformada);
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        localStorage.removeItem("token");
+        cerrarSesionLocal();
         navigate("/loginAdmin");
         Swal.fire("Error", "Sesión expirada. Por favor, inicie sesión nuevamente.", "error");
       }
@@ -56,7 +50,6 @@ const HomeAdmin = () => {
   };
 
 useEffect(() => {
-  console.log("[admin-debug][HomeAdmin] useEffect:init");
   const inicializarPanel = async () => {
     await fetchFila();
 
@@ -76,10 +69,9 @@ useEffect(() => {
 
         setTurnoActual(turnoMapeado);
         setAtendiendo(true);
-        console.log("Estado recuperado exitosamente:", turnoMapeado.turno);
       }
     } catch {
-      console.log("No hay turno previo en ventanilla.");
+      // No hay turno en ventanilla.
     }
   };
 
@@ -98,7 +90,6 @@ useEffect(() => {
 
       await fetchFila();
       
-      console.log("Turno atendido y WhatsApp disparado (Mock)");
     } catch {
       Swal.fire("Error", "No se pudo atender el turno. Verifique si ya hay uno en atención.", "error");
     }
@@ -119,7 +110,7 @@ useEffect(() => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Swal.fire({
       title: '¿Cerrar sesión?',
       text: "Tendrás que ingresar tus credenciales nuevamente.",
@@ -131,9 +122,10 @@ useEffect(() => {
       cancelButtonText: 'Cancelar',
       background: '#1e293b', 
       color: '#fff'
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        localStorage.removeItem("token");
+        await cerrarSesion();
+        cerrarSesionLocal();
         navigate("/loginAdmin");
       }
     });
