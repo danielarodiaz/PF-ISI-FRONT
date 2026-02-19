@@ -16,7 +16,6 @@ const TurnoPage = () => {
   const [datosTurno, setDatosTurno] = useState({ legajo: 0, tramite: "", NombreTurno: "" });
   const [porAtender, setPorAtender] = useState(false);
   const streamRef = useRef(null);
-  const reconnectTimeoutRef = useRef(null);
 
   const applyTurnoSnapshot = (turnoData, personas) => {
     if (!turnoData) {
@@ -65,44 +64,32 @@ const TurnoPage = () => {
 
     const publicToken = turnoRef.publicToken;
 
-    const connectStream = () => {
-      try {
-        const stream = createTurnoActivoStream(publicToken);
-        streamRef.current = stream;
+    try {
+      const stream = createTurnoActivoStream(publicToken);
+      streamRef.current = stream;
 
-        stream.addEventListener("turno.snapshot", (event) => {
-          try {
-            const payload = JSON.parse(event.data);
-            if (payload?.error) {
-              clearTurnoActivo();
-              navigate("/");
-              return;
-            }
-
-            applyTurnoSnapshot(payload.turno, payload.personasAdelante ?? 0);
-          } catch (error) {
-            console.error("Error parseando SSE turno:", error);
+      stream.addEventListener("turno.snapshot", (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload?.error) {
+            clearTurnoActivo();
+            navigate("/");
+            return;
           }
-        });
 
-        stream.onerror = () => {
-          stream.close();
-          if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-          }
-          reconnectTimeoutRef.current = setTimeout(connectStream, 2000);
-        };
-      } catch (error) {
-        console.error("No se pudo iniciar stream SSE turno:", error);
-      }
-    };
+          applyTurnoSnapshot(payload.turno, payload.personasAdelante ?? 0);
+        } catch (error) {
+          console.error("Error parseando SSE turno:", error);
+        }
+      });
 
-    connectStream();
+      // EventSource already handles retries automatically.
+      stream.onerror = () => {};
+    } catch (error) {
+      console.error("No se pudo iniciar stream SSE turno:", error);
+    }
 
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
       if (streamRef.current) {
         streamRef.current.close();
       }
