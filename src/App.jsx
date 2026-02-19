@@ -24,6 +24,9 @@ import ProtectedRoutes from "./routes/ProtectedRoutes";
 function App() {
   // Estado simple de login
   const [login, setLogin] = useState(!!localStorage.getItem("token"));
+  const rawBasePath = import.meta.env.VITE_BASE_PATH || "/";
+  const routerBaseName =
+    rawBasePath === "/" ? "/" : rawBasePath.replace(/\/+$/, "");
 
   const cambiarLogin = () => {
     const token = localStorage.getItem("token");
@@ -32,7 +35,7 @@ function App() {
 
   return (
     <ThemeProvider>
-      <BrowserRouter basename="/PF-ISI-FRONT">
+      <BrowserRouter basename={routerBaseName}>
         <Routes>
           {/* RUTAS PÚBLICAS
             Todas estas rutas comparten el Navbar y el fondo del PublicLayout 
