@@ -1,5 +1,5 @@
 import { useEffect,useState,useRef } from "react";
-import { sendMessageToChatbot } from "../helpers/chatbotApi";
+import { sendMessageToChatbot, sendMessageToChatbotStream } from "../helpers/chatbotApi";
 import { verificarConexionChat } from "../helpers/verificationConnection";
 import { SERVICE_ERROR_CODES, isBadRequestError, isConfigMissingError } from "../helpers/serviceErrors";
 import { Send, Bot, User, Loader2 } from "lucide-react"; // Iconos
@@ -137,29 +137,67 @@ const ChatbotScreen = () => {
     setMessage("");
     setIsLoading(true);
     const baseHistory = trimHistoryWindow(chatHistory, MAX_USER_MESSAGES);
-    const nextHistory = [...baseHistory, { autor: "usuario", contenido: currentMsg }];
+    const nextHistory = [
+      ...baseHistory,
+      { autor: "usuario", contenido: currentMsg },
+      { autor: "bot", contenido: "" },
+    ];
     setChatHistory(nextHistory);
 
     try {
-      const response = await sendMessageToChatbot(currentMsg, baseHistory, conversationId);
+      const response = await sendMessageToChatbotStream(currentMsg, baseHistory, conversationId, {
+        onToken: (partialAnswer) => {
+          setChatHistory((prev) => {
+            const updated = [...prev];
+            if (updated.length === 0) return updated;
+            const lastIndex = updated.length - 1;
+            if (updated[lastIndex]?.autor !== "bot") return updated;
+            updated[lastIndex] = { ...updated[lastIndex], contenido: partialAnswer };
+            return updated;
+          });
+        },
+      });
+
       if (response?.conversation_id) {
         setConversationId(response.conversation_id);
       }
-      setChatHistory((prev) => [
-        ...trimHistoryWindow(prev, MAX_USER_MESSAGES),
-        { autor: "bot", contenido: response.respuesta_bot },
-      ]);
-    } catch (error) {
-      console.error("Error al enviar mensaje:", error);
-      const unavailableMessage = isConfigMissingError(error)
-        ? "El asistente no está configurado. Contacta al administrador."
-        : isBadRequestError(error)
-          ? error.message
-          : "Lo siento, tuve un problema de conexión. Intenta de nuevo.";
-      setChatHistory((prev) => [
-        ...prev,
-        { autor: "bot", contenido: unavailableMessage },
-      ]);
+    } catch {
+      try {
+        const response = await sendMessageToChatbot(currentMsg, baseHistory, conversationId);
+        if (response?.conversation_id) {
+          setConversationId(response.conversation_id);
+        }
+        setChatHistory((prev) => {
+          const updated = [...prev];
+          if (updated.length === 0) return updated;
+          const lastIndex = updated.length - 1;
+          if (updated[lastIndex]?.autor !== "bot") {
+            updated.push({ autor: "bot", contenido: response.respuesta_bot });
+            return updated;
+          }
+          updated[lastIndex] = { ...updated[lastIndex], contenido: response.respuesta_bot };
+          return updated;
+        });
+      } catch (fallbackError) {
+        console.error("Error al enviar mensaje:", fallbackError);
+        const unavailableMessage = isConfigMissingError(fallbackError)
+          ? "El asistente no está configurado. Contacta al administrador."
+          : isBadRequestError(fallbackError)
+            ? fallbackError.message
+            : "Lo siento, tuve un problema de conexión. Intenta de nuevo.";
+
+        setChatHistory((prev) => {
+          const updated = [...prev];
+          if (updated.length === 0) return [{ autor: "bot", contenido: unavailableMessage }];
+          const lastIndex = updated.length - 1;
+          if (updated[lastIndex]?.autor !== "bot") {
+            updated.push({ autor: "bot", contenido: unavailableMessage });
+            return updated;
+          }
+          updated[lastIndex] = { ...updated[lastIndex], contenido: unavailableMessage };
+          return updated;
+        });
+      }
     } finally {
       setIsLoading(false);
     }
