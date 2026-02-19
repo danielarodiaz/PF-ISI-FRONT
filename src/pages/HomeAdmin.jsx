@@ -1,6 +1,6 @@
-import { useEffect,useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import TableFila from "../components/TableFila";
-import { getFila, atenderTurnoConId, putFinalizarAtencion, getTurnoEnVentanilla } from "../helpers/filaApi";
+import { getFila, atenderTurnoConId, putFinalizarAtencion, getTurnoEnVentanilla, createAdminFilaStream } from "../helpers/filaApi";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { cerrarSesion, cerrarSesionLocal } from "../helpers/login";
@@ -16,6 +16,8 @@ const HomeAdmin = () => {
   const [fila, setFila] = useState([]);
   const [turnoActual, setTurnoActual] = useState(null);
   const [atendiendo, setAtendiendo] = useState(false);
+  const streamRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
   const navigate = useNavigate();
   const pendientesCount = fila.filter((item) => !item.atendiendo && !item.atendido).length;
 
@@ -49,6 +51,30 @@ const HomeAdmin = () => {
     }
   };
 
+  const mapTurno = (turnoDb) => {
+    if (!turnoDb) return null;
+    return {
+      id: turnoDb.idTurno,
+      legajo: turnoDb.legajo,
+      tramite: turnoDb.tramite.descripcion,
+      fecha: turnoDb.fechaDeCreacion,
+      turno: turnoDb.nombreTurno,
+      atendiendo: turnoDb.estadoTurno?.descripcion === "Atendiendo",
+      atendido: turnoDb.estadoTurno?.descripcion === "Atendido",
+    };
+  };
+
+  const mapFila = (filaDb = []) =>
+    filaDb.map((item) => ({
+      id: item.idTurno,
+      legajo: item.turno.legajo,
+      tramite: item.turno.tramite.descripcion,
+      fecha: item.turno.fechaDeCreacion,
+      turno: item.turno.nombreTurno,
+      atendiendo: item.turno.estadoTurno.descripcion === "Atendiendo",
+      atendido: item.turno.estadoTurno.descripcion === "Atendido",
+    }));
+
 useEffect(() => {
   const inicializarPanel = async () => {
     await fetchFila();
@@ -76,9 +102,50 @@ useEffect(() => {
   };
 
   inicializarPanel();
+  const connectStream = () => {
+    try {
+      const stream = createAdminFilaStream();
+      streamRef.current = stream;
 
-  const interval = setInterval(fetchFila, 5000);
-  return () => clearInterval(interval);
+      stream.addEventListener("fila.snapshot", (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          setFila(mapFila(payload.fila || []));
+          setTurnoActual(mapTurno(payload.turnoEnVentanilla));
+          setAtendiendo(Boolean(payload.turnoEnVentanilla));
+        } catch (error) {
+          console.error("Error parseando SSE admin:", error);
+        }
+      });
+
+      stream.onerror = async () => {
+        stream.close();
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+        }
+
+        try {
+          await fetchFila();
+        } catch {
+          // no-op
+        }
+
+        reconnectTimeoutRef.current = setTimeout(connectStream, 2000);
+      };
+    } catch (error) {
+      console.error("No se pudo iniciar stream SSE admin:", error);
+    }
+  };
+
+  connectStream();
+  return () => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+    if (streamRef.current) {
+      streamRef.current.close();
+    }
+  };
 }, []);
 
   // --- ACCIONES ---

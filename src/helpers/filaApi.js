@@ -1,6 +1,7 @@
 import axios from "axios";
 import { BACKEND_URL } from "./config";
 import { createServiceError, SERVICE_ERROR_CODES } from "./serviceErrors";
+import { getAccessToken } from "./authStorage";
 
 const API_BASE_URL = BACKEND_URL;
 
@@ -194,9 +195,32 @@ export const getTurnoActivoPorToken = async (publicToken) => {
 };
 export const getTurnoEnVentanilla = async () => {
   const resp = await axios.get(`${API_BASE_URL}/api/Fila/TurnoEnVentanilla`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    headers: { Authorization: `Bearer ${getAccessToken()}` },
   });
   return resp.data;
+};
+
+export const createAdminFilaStream = () => {
+  ensureBackendConfigured();
+  const token = getAccessToken();
+  if (!token) {
+    throw createServiceError(SERVICE_ERROR_CODES.BAD_REQUEST, "No hay sesión de admin activa.");
+  }
+
+  const url = new URL(`${API_BASE_URL}/api/Fila/stream/admin`);
+  url.searchParams.set("access_token", token);
+  return new EventSource(url.toString());
+};
+
+export const createTurnoActivoStream = (publicToken) => {
+  ensureBackendConfigured();
+  if (!publicToken) {
+    throw createServiceError(SERVICE_ERROR_CODES.BAD_REQUEST, "PublicToken es requerido.");
+  }
+
+  const url = new URL(`${API_BASE_URL}/api/Turno/stream/activo`);
+  url.searchParams.set("publicToken", publicToken);
+  return new EventSource(url.toString());
 };
 // --- WhatsApp ---
 export const registrarTelefonoEnTurno = async (idTurno, telefono) => {

@@ -1,6 +1,6 @@
-import { useEffect,useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { personasAdelantePorToken, getTurnoActivoPorToken, cancelarTurnoPorToken } from "../helpers/filaApi";
+import { cancelarTurnoPorToken, createTurnoActivoStream } from "../helpers/filaApi";
 import { Users, Clock, LogOut } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";
 import { clearTurnoActivo, getTurnoActivoRef, saveTurnoActivo } from "../helpers/turnoStorage";
@@ -15,48 +15,38 @@ const TurnoPage = () => {
   const [progreso, setProgreso] = useState(0);
   const [datosTurno, setDatosTurno] = useState({ legajo: 0, tramite: "", NombreTurno: "" });
   const [porAtender, setPorAtender] = useState(false);
+  const streamRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
 
-  // ... (función obtenerTurno igual que antes)
-  const obtenerTurno = async (publicToken) => {
-    try {
-      let turnoData = await getTurnoActivoPorToken(publicToken);
-      saveTurnoActivo(turnoData);
-      setDatosTurno(turnoData);
-      setNumeroTurno(turnoData.nombreTurno);
-      fetchPersonasAdelante(turnoData, publicToken);
-    } catch (error) {
-      console.error("Error obteniendo turno:", error);
+  const applyTurnoSnapshot = (turnoData, personas) => {
+    if (!turnoData) {
+      clearTurnoActivo();
+      navigate("/");
+      return;
     }
-  };
 
-  const fetchPersonasAdelante = async (turnoData, publicToken) => {
-    try {
-      const personas = await personasAdelantePorToken(publicToken);
-      setPersonasAdelante(personas);
-      setTiempoEspera(personas * 3);
-      setProgreso((( (personas + 1) - personas) / (personas + 1)) * 100);
+    saveTurnoActivo(turnoData);
+    setDatosTurno(turnoData);
+    setNumeroTurno(turnoData.nombreTurno);
+    setPersonasAdelante(personas ?? 0);
+    setTiempoEspera((personas ?? 0) * 3);
+    setProgreso((( ((personas ?? 0) + 1) - (personas ?? 0)) / ((personas ?? 0) + 1)) * 100);
 
-      // --- CORRECCIÓN AQUÍ ---
-      // Si el turno finalizó o fue cancelado (estado 3/4), limpiamos storage antes de navegar
-      if(turnoData.idEstadoTurno == 3 || turnoData.idEstadoTurno == 4) {
-        clearTurnoActivo();
-        navigate("/");
-        return; // Detenemos la ejecución
-      }
-      // -----------------------
+    if (turnoData.idEstadoTurno === 3 || turnoData.idEstadoTurno === 4) {
+      clearTurnoActivo();
+      navigate("/");
+      return;
+    }
 
-      if (personas === 0 && turnoData.idEstadoTurno == 1) {
-        setEsTurno(false);
-        setPorAtender(true);
-      } else if (turnoData.idEstadoTurno == 2) {
-        setEsTurno(true);
-        setPorAtender(false);
-      } else {
-        setEsTurno(false);
-        setPorAtender(false);
-      }
-    } catch (error) {
-      console.error("Error:", error);
+    if ((personas ?? 0) === 0 && turnoData.idEstadoTurno === 1) {
+      setEsTurno(false);
+      setPorAtender(true);
+    } else if (turnoData.idEstadoTurno === 2) {
+      setEsTurno(true);
+      setPorAtender(false);
+    } else {
+      setEsTurno(false);
+      setPorAtender(false);
     }
   };
 
@@ -68,14 +58,56 @@ const TurnoPage = () => {
 
   useEffect(() => {
     const turnoRef = getTurnoActivoRef();
-    if (turnoRef?.publicToken) {
-      obtenerTurno(turnoRef.publicToken);
-      const interval = setInterval(() => obtenerTurno(turnoRef.publicToken), 5000);
-      return () => clearInterval(interval);
-    } else {
+    if (!turnoRef?.publicToken) {
       navigate("/");
+      return undefined;
     }
-  }, []);
+
+    const publicToken = turnoRef.publicToken;
+
+    const connectStream = () => {
+      try {
+        const stream = createTurnoActivoStream(publicToken);
+        streamRef.current = stream;
+
+        stream.addEventListener("turno.snapshot", (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (payload?.error) {
+              clearTurnoActivo();
+              navigate("/");
+              return;
+            }
+
+            applyTurnoSnapshot(payload.turno, payload.personasAdelante ?? 0);
+          } catch (error) {
+            console.error("Error parseando SSE turno:", error);
+          }
+        });
+
+        stream.onerror = () => {
+          stream.close();
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+          }
+          reconnectTimeoutRef.current = setTimeout(connectStream, 2000);
+        };
+      } catch (error) {
+        console.error("No se pudo iniciar stream SSE turno:", error);
+      }
+    };
+
+    connectStream();
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (streamRef.current) {
+        streamRef.current.close();
+      }
+    };
+  }, [navigate]);
 
   const getStatusColor = () => {
     if (esTurno) return "bg-green-500 shadow-green-200 dark:shadow-none";
