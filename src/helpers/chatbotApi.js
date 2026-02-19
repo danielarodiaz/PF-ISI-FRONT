@@ -13,7 +13,7 @@ const ensureChatbotConfigured = () => {
 };
 
 // Función para enviar un mensaje al chatbot
-export const sendMessageToChatbot = async (message, historial = []) => {
+export const sendMessageToChatbot = async (message, historial = [], conversationId = null) => {
   try {
     ensureChatbotConfigured();
     const response = await axios.post(
@@ -21,6 +21,7 @@ export const sendMessageToChatbot = async (message, historial = []) => {
       {
         historial: historial, // Array con mensajes previos
         mensaje: message, // Mensaje actual
+        conversation_id: conversationId,
       },
       {
         headers: {
@@ -33,6 +34,10 @@ export const sendMessageToChatbot = async (message, historial = []) => {
     console.error("Error al enviar un mensaje al chatbot:", error);
     if (error?.code === SERVICE_ERROR_CODES.CONFIG_MISSING) {
       throw error;
+    }
+    if (error?.response?.status === 400) {
+      const detail = error?.response?.data?.detail || "Solicitud inválida al asistente.";
+      throw createServiceError(SERVICE_ERROR_CODES.BAD_REQUEST, detail, error);
     }
     throw createServiceError(
       SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,

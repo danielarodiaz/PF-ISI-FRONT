@@ -1,25 +1,84 @@
 import { useEffect,useState,useRef } from "react";
 import { sendMessageToChatbot } from "../helpers/chatbotApi";
 import { verificarConexionChat } from "../helpers/verificationConnection";
-import { SERVICE_ERROR_CODES, isConfigMissingError } from "../helpers/serviceErrors";
+import { SERVICE_ERROR_CODES, isBadRequestError, isConfigMissingError } from "../helpers/serviceErrors";
 import { Send, Bot, User, Loader2 } from "lucide-react"; // Iconos
 import PageLayout from "../components/layout/PageLayout";
 
 const INITIAL_MESSAGE_DELAY_MS = 1200;
+const CHAT_SESSION_KEY = "chatbotSession";
+const ENV_MAX_USER_MESSAGES = Number(import.meta.env.VITE_CHATBOT_MAX_USER_MESSAGES);
+const MAX_USER_MESSAGES = Number.isFinite(ENV_MAX_USER_MESSAGES) && ENV_MAX_USER_MESSAGES > 0
+  ? Math.floor(ENV_MAX_USER_MESSAGES)
+  : 30;
+
+const trimHistoryWindow = (history, maxUserMessages) => {
+  if (!Array.isArray(history) || history.length === 0) return [];
+
+  let userCount = 0;
+  let startIndex = 0;
+
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    if (history[i]?.autor === "usuario") {
+      userCount += 1;
+      if (userCount > maxUserMessages) {
+        startIndex = i + 1;
+        break;
+      }
+    }
+  }
+
+  return history.slice(startIndex);
+};
+
+const loadChatSession = () => {
+  try {
+    const raw = localStorage.getItem(CHAT_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed?.chatHistory)) return null;
+    return {
+      chatHistory: parsed.chatHistory,
+      conversationId: parsed.conversationId || null,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const saveChatSession = (chatHistory, conversationId) => {
+  if (!Array.isArray(chatHistory) || chatHistory.length === 0) {
+    localStorage.removeItem(CHAT_SESSION_KEY);
+    return;
+  }
+
+  localStorage.setItem(
+    CHAT_SESSION_KEY,
+    JSON.stringify({
+      chatHistory,
+      conversationId: conversationId || null,
+    })
+  );
+};
 
 const ChatbotScreen = () => {
+  const initialSessionRef = useRef(loadChatSession());
   const [message, setMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState([]);
+  const [chatHistory, setChatHistory] = useState(() => initialSessionRef.current?.chatHistory || []);
+  const [conversationId, setConversationId] = useState(() => initialSessionRef.current?.conversationId || null);
   const [isLoading, setIsLoading] = useState(false);
   const [chatAvailable, setChatAvailable] = useState(false);
   const [chatStatusChecked, setChatStatusChecked] = useState(false);
   const [chatErrorType, setChatErrorType] = useState(null);
+  const hasHydratedRef = useRef(false);
   const messagesEndRef = useRef(null);
-  const isWaitingBotResponse = isLoading || !chatStatusChecked;
+  const shouldShowInitialConnecting = !chatStatusChecked && chatHistory.length === 0;
+  const isWaitingBotResponse = isLoading || shouldShowInitialConnecting;
   const botLoadingText = chatStatusChecked ? "Pensando..." : "Conectando...";
 
   useEffect(() => {
     let isCancelled = false;
+    const hasStoredConversation = Boolean((initialSessionRef.current?.chatHistory || []).length);
 
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -42,11 +101,11 @@ const ChatbotScreen = () => {
       setChatAvailable(Boolean(available));
       setChatStatusChecked(true);
       setChatErrorType(available ? null : healthReason);
-      if (available) {
+      if (available && !hasStoredConversation) {
         setChatHistory([{ autor: "bot", contenido: "¡Hola! Soy Uteniano 😎. ¿En qué puedo ayudarte hoy?" }]);
-      } else if (healthReason === SERVICE_ERROR_CODES.CONFIG_MISSING) {
+      } else if (!available && !hasStoredConversation && healthReason === SERVICE_ERROR_CODES.CONFIG_MISSING) {
         setChatHistory([{ autor: "bot", contenido: "El asistente no está configurado. Contacta al administrador." }]);
-      } else {
+      } else if (!available && !hasStoredConversation) {
         setChatHistory([{ autor: "bot", contenido: "El asistente no está disponible en este momento." }]);
       }
     };
@@ -56,6 +115,14 @@ const ChatbotScreen = () => {
       isCancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!hasHydratedRef.current) {
+      hasHydratedRef.current = true;
+      return;
+    }
+    saveChatSession(chatHistory, conversationId);
+  }, [chatHistory, conversationId]);
 
   // Auto-scroll al fondo cuando llega un mensaje nuevo
   useEffect(() => {
@@ -69,20 +136,26 @@ const ChatbotScreen = () => {
     const currentMsg = message;
     setMessage("");
     setIsLoading(true);
-
-    setChatHistory((prev) => [...prev, { autor: "usuario", contenido: currentMsg }]);
+    const baseHistory = trimHistoryWindow(chatHistory, MAX_USER_MESSAGES);
+    const nextHistory = [...baseHistory, { autor: "usuario", contenido: currentMsg }];
+    setChatHistory(nextHistory);
 
     try {
-      const response = await sendMessageToChatbot(currentMsg, chatHistory);
+      const response = await sendMessageToChatbot(currentMsg, baseHistory, conversationId);
+      if (response?.conversation_id) {
+        setConversationId(response.conversation_id);
+      }
       setChatHistory((prev) => [
-        ...prev,
+        ...trimHistoryWindow(prev, MAX_USER_MESSAGES),
         { autor: "bot", contenido: response.respuesta_bot },
       ]);
     } catch (error) {
       console.error("Error al enviar mensaje:", error);
       const unavailableMessage = isConfigMissingError(error)
         ? "El asistente no está configurado. Contacta al administrador."
-        : "Lo siento, tuve un problema de conexión. Intenta de nuevo.";
+        : isBadRequestError(error)
+          ? error.message
+          : "Lo siento, tuve un problema de conexión. Intenta de nuevo.";
       setChatHistory((prev) => [
         ...prev,
         { autor: "bot", contenido: unavailableMessage },
