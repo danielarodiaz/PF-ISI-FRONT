@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { getDatosReportes } from "../helpers/filaApi";
+import TurnosChart from "./TurnosChart"; // 1. IMPORTAMOS LOS GRÁFICOS
 
 const DashboardMetrics = () => {
   const [loading, setLoading] = useState(true);
@@ -19,10 +20,7 @@ const DashboardMetrics = () => {
     fetchData();
   }, []);
 
-  // --- 1. TRÁMITES MÁS FRECUENTES ---
-  // --- TIEMPO PROMEDIO (Calculado con fechas reales) ---
   const promedioEspera = useMemo(() => {
-    // Filtramos solo los turnos que ya fueron atendidos (Estado 3 = Atendido, ajusta según tu Enum)
     const turnosAtendidos = rawData.filter(t => 
         t.idEstadoTurno === 3 && t.fechaDeCreacion && t.fechaUltimaModificacion
     );
@@ -32,9 +30,7 @@ const DashboardMetrics = () => {
     const totalMinutos = turnosAtendidos.reduce((acc, curr) => {
       const inicio = new Date(curr.fechaDeCreacion);
       const fin = new Date(curr.fechaUltimaModificacion);
-      // Diferencia en milisegundos convertida a minutos
       const diff = (fin - inicio) / (1000 * 60); 
-      // Filtramos valores negativos o absurdos (errores de data)
       return acc + (diff > 0 ? diff : 0);
     }, 0);
 
@@ -45,9 +41,20 @@ const DashboardMetrics = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
-      <div className="text-center text-slate-700 dark:text-slate-200">
-        Tiempo promedio estimado: <strong>{promedioEspera}m</strong>
+      
+      {/* TARJETA DE MÉTRICAS */}
+      <div className="bg-white dark:bg-slate-900 shadow rounded-lg p-6 mb-8 text-center border-l-4 border-blue-500">
+        <h3 className="text-lg font-semibold text-slate-500 dark:text-slate-400">Tiempo Promedio de Atención</h3>
+        <p className="text-4xl font-bold text-slate-800 dark:text-slate-100 mt-2">
+          {promedioEspera} <span className="text-xl font-normal">min</span>
+        </p>
       </div>
+
+      {/* SECCIÓN DE GRÁFICOS */}
+      <div className="bg-white dark:bg-slate-900 shadow rounded-lg p-6">
+        <TurnosChart />
+      </div>
+
     </div>
   );
 };
