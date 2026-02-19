@@ -79,6 +79,20 @@ export const personasAdelanteEnLaFila = async (idTurno) => {
   }
 };
 
+export const personasAdelantePorToken = async (publicToken) => {
+  if (!publicToken) throw new Error("publicToken is required");
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/Fila/ObtenerCantidadDePersonasAdelantePorToken`, {
+      params: { publicToken }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching personas por token:", error);
+    throw error;
+  }
+};
+
 export const atenderTurnoConId = async (idTurno) => {
   if (!idTurno) throw new Error("idTurno is required");
 
@@ -111,6 +125,18 @@ export const cancelarTurno = async (idTurno) => {
     throw error;
   }
 };
+
+export const cancelarTurnoPorToken = async (publicToken) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/api/Fila/cancelar-por-token`, {
+      publicToken,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error cancelando turno por token:", error);
+    throw error;
+  }
+};
 // --- TURNOS (Individuales) ---
 export const getTurnos = async () => {
   try {
@@ -138,6 +164,18 @@ export const getTurnoById = async (idTurno) => {
     throw error;
   }
 };
+
+export const getTurnoActivoPorToken = async (publicToken) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/Turno/ObtenerTurnoActivo`, {
+      params: { publicToken },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching turno por token:", error);
+    throw error;
+  }
+};
 export const getTurnoEnVentanilla = async () => {
   const resp = await axios.get(`${API_BASE_URL}/api/Fila/TurnoEnVentanilla`, {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -155,6 +193,19 @@ export const registrarTelefonoEnTurno = async (idTurno, telefono) => {
       return response.data;
   } catch (error) {
       console.error("Error en registrarTelefonoEnTurno:", error);
+      throw error;
+  }
+};
+
+export const registrarTelefonoEnTurnoPorToken = async (publicToken, telefono) => {
+  try {
+      const response = await axios.put(`${API_BASE_URL}/api/Fila/RegistrarTelefono`, {
+          publicToken,
+          telefono
+      });
+      return response.data;
+  } catch (error) {
+      console.error("Error en registrarTelefonoEnTurnoPorToken:", error);
       throw error;
   }
 };

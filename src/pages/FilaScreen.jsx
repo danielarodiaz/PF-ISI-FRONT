@@ -4,6 +4,7 @@ import PageLayout from "../components/layout/PageLayout";
 import { initializeDatabase } from "../data/dataFila.js";
 import { getTramites, postTurnoEnFila } from "../helpers/filaApi.js";
 import { isConfigMissingError } from "../helpers/serviceErrors";
+import { saveTurnoActivo } from "../helpers/turnoStorage";
 import { AlertCircle, CheckCircle } from "lucide-react";
 
 const FilaScreen = () => {
@@ -71,7 +72,7 @@ const FilaScreen = () => {
     try {
       const legajoAEnviar = noLegajo ? null : legajo;
       const turnoData = await postTurnoEnFila(legajoAEnviar, indexTramite);
-      sessionStorage.setItem("turnoActivo", JSON.stringify(turnoData));
+      saveTurnoActivo(turnoData);
       navigate("/whatsapp");
     } catch (error) {
       console.error("Error creando turno:", error);
