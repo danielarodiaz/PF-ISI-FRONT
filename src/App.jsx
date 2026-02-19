@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -12,31 +11,26 @@ import TurnoScreen from "./pages/TurnoScreen";
 import ChatbotScreen from "./pages/ChatbotScreen";
 import FaqScreen from "./pages/FaqScreen";
 import WhatsAppScreen from "./pages/WhatsAppScreen";
+
+// Paginas Admin
 import LoginAdmin from "./pages/LoginAdmin";
+import HomeAdmin from "./pages/HomeAdmin"; 
 import DashboardMetrics from "./pages/DashboardMetrics";
 import FaqsAdmin from "./pages/FaqsAdmin";
 
-
-// Rutas Protegidas (Admin)
-import RoutesApp from "./routes/RoutesApp";
+// Rutas Protegidas
 import ProtectedRoutes from "./routes/ProtectedRoutes";
 
 function App() {
-  // Estado simple de login
-  const [login, setLogin] = useState(!!localStorage.getItem("token"));
-
-  const cambiarLogin = () => {
-    const token = localStorage.getItem("token");
-    setLogin(!!token);
-  };
-
   return (
     <ThemeProvider>
       <BrowserRouter basename="/PF-ISI-FRONT">
         <Routes>
-          {/* RUTAS PÚBLICAS
-            Todas estas rutas comparten el Navbar y el fondo del PublicLayout 
-          */}
+          
+          {/* =======================================================
+              GRUPO 1: RUTAS PÚBLICAS (ALUMNOS)
+              Usan PublicLayout (Tienen Navbar y fondo de alumnos)
+             ======================================================= */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<MainScreen />} />
             <Route path="/fila" element={<FilaScreen />} />
@@ -44,30 +38,39 @@ function App() {
             <Route path="/chatbot" element={<ChatbotScreen />} />
             <Route path="/faq" element={<FaqScreen />} />
             <Route path="/whatsapp" element={<WhatsAppScreen />} />
-            <Route path="/admin/dashboard" element={<DashboardMetrics />} />
-            <Route path="/admin/faqs" element={<FaqsAdmin />} />
-
-            
           </Route>
 
-          {/* LOGIN ADMINISTRADOR (Sin layout público) */}
-          <Route 
-            path="/loginAdmin" 
-            element={<LoginAdmin cambiarLogin={cambiarLogin} />} 
-          />
 
-          {/* RUTAS ADMINISTRADOR (Protegidas) */}
-          <Route
-            path="/admin/*"
-            element={
-              <ProtectedRoutes login={login}>
-                <RoutesApp />
-              </ProtectedRoutes>
-            }
-          />
-          
-          {/* Redirección por defecto a Home */}
+          {/* =======================================================
+              GRUPO 2: LOGIN
+              No tiene layout (Pantalla completa limpia)
+             ======================================================= */}
+          <Route path="/loginAdmin" element={<LoginAdmin />} />
+
+
+          {/* =======================================================
+              GRUPO 3: RUTAS PRIVADAS (ADMINISTRADOR)
+              Están protegidas y NO usan PublicLayout (Header limpio)
+             ======================================================= */}
+          <Route path="/admin" element={<ProtectedRoutes />}>
+            
+            {/* Aquí definimos las sub-rutas de admin */}
+            
+            {/* Panel Principal: /admin/homeAdmin */}
+            <Route path="homeAdmin" element={<HomeAdmin />} />
+            
+            {/* Reportes: /admin/dashboard */}
+            <Route path="dashboard" element={<DashboardMetrics />} />
+            
+            {/* FAQs: /admin/faqs */}
+            <Route path="faqs" element={<FaqsAdmin />} />
+
+          </Route>
+
+
+          {/* Redirección por defecto */}
           <Route path="*" element={<Navigate to="/" />} />
+
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

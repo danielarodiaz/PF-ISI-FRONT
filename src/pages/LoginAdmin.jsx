@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { LogIn } from "../helpers/login";
-import { User, Lock, LogIn as LogInIcon } from "lucide-react"; // Iconos modernos
+import { User, Lock, LogIn as LogInIcon } from "lucide-react"; 
 
 const LoginAdmin = ({ cambiarLogin }) => {
   const navigate = useNavigate();
@@ -26,15 +26,23 @@ const LoginAdmin = ({ cambiarLogin }) => {
 
     setLoading(true);
     try {
-      const token = await LogIn(user, password);
-      if (token) {
-        localStorage.setItem("token", token.token);
-        cambiarLogin();
+      // Llamamos al helper
+      const data = await LogIn(user, password);
+      
+      // Verificamos si data tiene la propiedad token
+      if (data && data.token) {
+        // Guardamos SOLO el string del token
+        localStorage.setItem("token", data.token);
+        
+        // Si usas un estado global para login, actualízalo aquí
+        if(cambiarLogin) cambiarLogin(); 
+        
         navigate("/admin/homeAdmin");
       } else {
-        throw new Error("Credenciales inválidas");
+        throw new Error("Respuesta inválida del servidor");
       }
     } catch (error) {
+      console.error(error);
       Swal.fire({
         icon: "error",
         title: "Acceso Denegado",

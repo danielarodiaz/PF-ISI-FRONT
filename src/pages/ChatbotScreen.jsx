@@ -12,10 +12,15 @@ const ChatbotScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
-    verificarConexionChat();
-    // Mensaje de bienvenida inicial (opcional)
-    setChatHistory([{ autor: "bot", contenido: "¡Hola! Soy Uteniano 😎. ¿En qué puedo ayudarte hoy?" }]);
+useEffect(() => {
+    // verificarConexionChat(); // Comenta esto si no tienes el back levantado
+
+    // Historial Hardcodeado
+    setChatHistory([
+      { autor: "bot", contenido: "¡Hola! Soy Uteniano 😎. ¿En qué puedo ayudarte hoy?" },
+      { autor: "usuario", contenido: "Hola, quería saber los horarios de atención." },
+      { autor: "bot", contenido: "Nuestro horario de atención es de Lunes a Viernes de 8:00 a 12:00 y de 16:00 a 20:00 hs." },
+    ]);
   }, []);
 
   // Auto-scroll al fondo cuando llega un mensaje nuevo

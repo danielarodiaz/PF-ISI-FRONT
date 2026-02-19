@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { verificarToken } from "../helpers/login";
+import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
 
-const ProtectedRoutes = ({ children }) => {
+const ProtectedRoutes = () => {
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const location = useLocation();
 
   useEffect(() => {
-    const checkToken = async () => {
+    const checkAuth = async () => {
       const token = localStorage.getItem("token");
       
+      // 1. Si no hay token, rechazamos inmediatamente
       if (!token) {
         setIsAuthenticated(false);
         setIsLoading(false);
@@ -19,52 +21,45 @@ const ProtectedRoutes = ({ children }) => {
       }
 
       try {
-        const valido = await verificarToken(token);
+        // 2. Verificamos con el backend
+        const esValido = await verificarToken(token);
         
-        if (!valido) {
-          Swal.fire({
-            icon: "error",
-            title: "Oops...",
-            text: "Expiró tu sesión. Vuelve a iniciar sesión para continuar",
-          }).then(() => {
-            localStorage.removeItem("token");
-            navigate("/loginAdmin");
-          });
-          //localStorage.removeItem("token");
-          setIsAuthenticated(false);
-        } else {
-          setIsAuthenticated(true);
+        if (!esValido) {
+          throw new Error("Token no válido");
         }
+        
+        // 3. Si todo ok, autorizamos
+        setIsAuthenticated(true);
       } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Oops...",
-          text: "Expiró tu sesión. Vuelve a iniciar sesión para continuar",
-        }).then(() => {
-          localStorage.removeItem("token");
-          navigate("/loginAdmin"); // Redirigir sin recargar la página
-        });
-        //console.error("Error verifying token:", error);
-        //localStorage.removeItem("token");
+        // 4. Si falla (401), limpiamos y preparamos redirección
+        console.warn("Sesión inválida, redirigiendo...");
+        localStorage.removeItem("token");
         setIsAuthenticated(false);
       } finally {
+        // 5. Terminó la carga
         setIsLoading(false);
       }
     };
 
-    checkToken();
-  }, [location.pathname]); // Re-verify when path changes in protected routes
+    checkAuth();
+  }, []);
 
+  // Muestra spinner mientras verifica (evita pantalla blanca momentánea)
   if (isLoading) {
-    // You could return a loading spinner here
-    return <div className="text-center py-5">Verificando acceso...</div>;
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+      </div>
+    );
   }
 
+  // Si falló la verificación, manda al login
   if (!isAuthenticated) {
-    return <Navigate to="/loginAdmin" />;
+    return <Navigate to="/loginadmin" replace />;
   }
 
-  return children;
+  // Si pasó, renderiza la página solicitada (HomeAdmin, Dashboard, etc.)
+  return <Outlet />;
 };
 
 export default ProtectedRoutes;

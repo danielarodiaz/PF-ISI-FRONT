@@ -28,7 +28,40 @@ const FaqsAdmin = () => {
   const [editingFaq, setEditingFaq] = useState(null); // null = creando, objeto = editando
   const [formData, setFormData] = useState({ pregunta: "", respuesta: "" });
 
-  // --- Cargar Datos ---
+// --- DATOS HARDCODEADOS (Mock) ---
+  const MOCK_FAQS = [
+    { 
+      id_faq: 1, 
+      pregunta: "¿Cuáles son los horarios de atención?", 
+      respuesta: "Atendemos de Lunes a Viernes de 08:00 a 12:00 y de 16:00 a 20:00 hs.", 
+      ultima_modificacion: new Date('2024-03-10') 
+    },
+    { 
+      id_faq: 2, 
+      pregunta: "¿Qué documentación necesito para inscribirme?", 
+      respuesta: "DNI original y fotocopia, título secundario o constancia de título en trámite, y 2 fotos carnet.", 
+      ultima_modificacion: new Date('2024-03-12') 
+    },
+    { 
+      id_faq: 3, 
+      pregunta: "¿Cómo solicito el certificado de alumno regular?", 
+      respuesta: "Debes solicitarlo a través del sistema Sysacad y retirarlo por ventanilla pasadas las 48hs hábiles.", 
+      ultima_modificacion: new Date('2024-04-05') 
+    },
+    { 
+      id_faq: 4, 
+      pregunta: "¿Dónde legalizo mi título secundario?", 
+      respuesta: "Debes dirigirte al Rectorado de la universidad o al Ministerio de Educación, dependiendo de la procedencia del título.", 
+      ultima_modificacion: new Date('2024-05-20') 
+    },
+    { 
+      id_faq: 5, 
+      pregunta: "¿Cómo recupero mi clave de Sysacad?", 
+      respuesta: "Si olvidaste tu clave, debes acercarte personalmente a la oficina de Alumnos con tu DNI para blanquearla.", 
+      ultima_modificacion: new Date('2024-06-01') 
+    }
+  ];
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -36,15 +69,16 @@ const FaqsAdmin = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getFaqs();
-      setFaqs(data);
+      // INTENTO DE API (Comentado o activo, pero con fallback)
+      // const data = await getFaqs(); 
+      // setFaqs(data);
+      
+      // USAMOS EL MOCK DIRECTAMENTE POR AHORA:
+      setFaqs(MOCK_FAQS);
+      
     } catch (error) {
       console.error(error);
-      // Fallback data para visualización si falla la API
-      setFaqs([
-        { id_faq: 1, pregunta: "¿Dónde pido el certificado?", respuesta: "En ventanilla 4.", ultima_modificacion: new Date() },
-        { id_faq: 2, pregunta: "¿Horarios de atención?", respuesta: "De 8 a 12hs.", ultima_modificacion: new Date() },
-      ]);
+      setFaqs(MOCK_FAQS); // Fallback por si falla la API
     } finally {
       setLoading(false);
     }
