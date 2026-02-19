@@ -12,10 +12,7 @@ import {
   MessageCircleQuestion 
 } from "lucide-react";
 
-// Importa tus funciones reales de API aquí.
-// Por ahora usaré mocks para que la UI funcione visualmente.
-import { getFaqs } from "../helpers/faqApi"; 
-// import { postFaq, putFaq, deleteFaq } from "../helpers/faqApi"; 
+import { getFaqs, postFaq, putFaq, deleteFaq } from "../helpers/faqApi"; 
 
 const FaqsAdmin = () => {
   const navigate = useNavigate();
@@ -40,11 +37,8 @@ const FaqsAdmin = () => {
       setFaqs(data);
     } catch (error) {
       console.error(error);
-      // Fallback data para visualización si falla la API
-      setFaqs([
-        { id_faq: 1, pregunta: "¿Dónde pido el certificado?", respuesta: "En ventanilla 4.", ultima_modificacion: new Date() },
-        { id_faq: 2, pregunta: "¿Horarios de atención?", respuesta: "De 8 a 12hs.", ultima_modificacion: new Date() },
-      ]);
+      setFaqs([]);
+      Swal.fire("Error", error?.message || "No se pudieron cargar las FAQs.", "error");
     } finally {
       setLoading(false);
     }
@@ -80,24 +74,17 @@ const FaqsAdmin = () => {
 
     try {
       if (editingFaq) {
-        // Lógica de UPDATE (PUT)
-        // await putFaq(editingFaq.id_faq, formData);
-        
-        // Simulación visual de update
-        setFaqs(faqs.map(f => f.id_faq === editingFaq.id_faq ? { ...f, ...formData, ultima_modificacion: new Date() } : f));
+        const updatedFaq = await putFaq(editingFaq.id_faq, formData);
+        setFaqs(faqs.map(f => f.id_faq === editingFaq.id_faq ? updatedFaq : f));
         Swal.fire("Actualizado", "La pregunta ha sido actualizada.", "success");
       } else {
-        // Lógica de CREATE (POST)
-        // const newFaq = await postFaq(formData);
-
-        // Simulación visual de create
-        const newMock = { id_faq: Date.now(), ...formData, ultima_modificacion: new Date() };
-        setFaqs([...faqs, newMock]);
+        const createdFaq = await postFaq(formData);
+        setFaqs([...faqs, createdFaq]);
         Swal.fire("Creado", "Nueva pregunta agregada.", "success");
       }
       handleCloseModal();
-    } catch {
-      Swal.fire("Error", "No se pudo guardar los cambios", "error");
+    } catch (error) {
+      Swal.fire("Error", error?.message || "No se pudo guardar los cambios", "error");
     }
   };
 
@@ -116,13 +103,11 @@ const FaqsAdmin = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // await deleteFaq(id);
-          
-          // Simulación visual
+          await deleteFaq(id);
           setFaqs(faqs.filter(f => f.id_faq !== id));
           Swal.fire('Eliminado!', 'El registro ha sido eliminado.', 'success');
-        } catch {
-          Swal.fire("Error", "No se pudo eliminar", "error");
+        } catch (error) {
+          Swal.fire("Error", error?.message || "No se pudo eliminar", "error");
         }
       }
     });
