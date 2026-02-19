@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
-import { getTramites, postTurnoEnFila, validarLegajoDisponible } from "../helpers/filaApi.js";
+import { getTramites, getTurnoActivoPorToken, postTurnoEnFila, validarLegajoDisponible } from "../helpers/filaApi.js";
 import { isConfigMissingError } from "../helpers/serviceErrors";
-import { saveTurnoActivo } from "../helpers/turnoStorage";
+import { clearTurnoActivo, getTurnoActivoRef, saveTurnoActivo } from "../helpers/turnoStorage";
+import { getOrCreateDeviceId } from "../helpers/deviceId";
 import { AlertCircle, CheckCircle } from "lucide-react";
 
 const FilaScreen = () => {
@@ -19,6 +20,7 @@ const FilaScreen = () => {
   const [serviceError, setServiceError] = useState("");
   const [checkingLegajo, setCheckingLegajo] = useState(false);
   const legajoValidationRequestRef = useRef(0);
+  const ACTIVE_TURNO_STATES = new Set([1, 2]);
   const isFormDisabled = loadingTramites || Boolean(serviceError);
   const hasLegajoError = !noLegajo && Boolean(errorLegajo);
   const isSubmitDisabled = isFormDisabled || checkingLegajo || hasLegajoError;
@@ -27,26 +29,53 @@ const FilaScreen = () => {
     : "w-full py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-200 dark:shadow-none transition-all hover:-translate-y-1 flex items-center justify-center gap-2";
 
   useEffect(() => {
-    const fetchTramites = async () => {
+    let isMounted = true;
+
+    const initializeScreen = async () => {
       setLoadingTramites(true);
       setServiceError("");
       try {
+        const turnoRef = getTurnoActivoRef();
+        if (turnoRef?.publicToken) {
+          try {
+            const turnoActivo = await getTurnoActivoPorToken(turnoRef.publicToken);
+            if (turnoActivo && ACTIVE_TURNO_STATES.has(turnoActivo.idEstadoTurno)) {
+              saveTurnoActivo(turnoActivo);
+              navigate("/turno", { replace: true });
+              return;
+            }
+            clearTurnoActivo();
+          } catch {
+            clearTurnoActivo();
+          }
+        }
+
         const tramitesData = await getTramites();
-        setTramites(Array.isArray(tramitesData) ? tramitesData : []);
+        if (isMounted) {
+          setTramites(Array.isArray(tramitesData) ? tramitesData : []);
+        }
       } catch (error) {
         console.error("Error fetching tramites:", error);
-        setTramites([]);
-        if (isConfigMissingError(error)) {
-          setServiceError("El módulo de turnos no está configurado. Contacta al administrador.");
-        } else {
-          setServiceError("Servicio de turnos no disponible en este momento. Intenta nuevamente en unos minutos.");
+        if (isMounted) {
+          setTramites([]);
+          if (isConfigMissingError(error)) {
+            setServiceError("El módulo de turnos no está configurado. Contacta al administrador.");
+          } else {
+            setServiceError("Servicio de turnos no disponible en este momento. Intenta nuevamente en unos minutos.");
+          }
         }
       } finally {
-        setLoadingTramites(false);
+        if (isMounted) {
+          setLoadingTramites(false);
+        }
       }
     };
-    fetchTramites();
-  }, []);
+    initializeScreen();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate]);
 
   const handleTramiteChange = (e) => {
     if (isFormDisabled) return;
@@ -113,13 +142,16 @@ const FilaScreen = () => {
     if (hasLegajoError) return;
     try {
       const legajoAEnviar = noLegajo ? null : legajo;
-      const turnoData = await postTurnoEnFila(legajoAEnviar, indexTramite);
+      const deviceId = getOrCreateDeviceId();
+      const turnoData = await postTurnoEnFila(legajoAEnviar, indexTramite, deviceId);
       saveTurnoActivo(turnoData);
       navigate("/whatsapp");
     } catch (error) {
       console.error("Error creando turno:", error);
       if (isConfigMissingError(error)) {
         setServiceError("El módulo de turnos no está configurado. Contacta al administrador.");
+      } else if (error?.message?.includes("dispositivo ya tiene un turno activo")) {
+        setServiceError(`${error.message} Si recargaste o cambiaste navegador, vuelve con el link de tu turno activo.`);
       } else if (error?.message?.includes("legajo ya se encuentra en la fila")) {
         setErrorLegajo(error.message);
       } else {

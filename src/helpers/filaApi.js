@@ -43,12 +43,13 @@ export const getFila = async () => {
   }
 };
 
-export const postTurnoEnFila = async (legajo, idTramite) => {
+export const postTurnoEnFila = async (legajo, idTramite, deviceId) => {
   try {
     ensureBackendConfigured();
     const turnoData = {
       legajo: legajo,
-      idTramite: idTramite
+      idTramite: idTramite,
+      deviceId: deviceId,
     };
     const response = await axios.post(`${API_BASE_URL}/api/Fila/AgregarTurnoAFila`, turnoData);
     return response.data;
