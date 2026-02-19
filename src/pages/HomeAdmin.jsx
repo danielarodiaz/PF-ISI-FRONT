@@ -40,7 +40,7 @@ const HomeAdmin = () => {
   const [turnoActual, setTurnoActual] = useState(null);
   const [atendiendo, setAtendiendo] = useState(false);
   const streamRef = useRef(null);
-  const reconnectTimeoutRef = useRef(null);
+  const lastFallbackFetchRef = useRef(0);
   const navigate = useNavigate();
   const pendientesCount = fila.filter((item) => !item.atendiendo && !item.atendido).length;
 
@@ -125,46 +125,41 @@ useEffect(() => {
   };
 
   inicializarPanel();
-  const connectStream = () => {
-    try {
-      const stream = createAdminFilaStream();
-      streamRef.current = stream;
 
-      stream.addEventListener("fila.snapshot", (event) => {
-        try {
-          const payload = JSON.parse(event.data);
-          setFila(mapFila(payload.fila || []));
-          setTurnoActual(mapTurno(payload.turnoEnVentanilla));
-          setAtendiendo(Boolean(payload.turnoEnVentanilla));
-        } catch (error) {
-          console.error("Error parseando SSE admin:", error);
-        }
-      });
+  try {
+    const stream = createAdminFilaStream();
+    streamRef.current = stream;
 
-      stream.onerror = async () => {
-        stream.close();
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-        }
+    stream.addEventListener("fila.snapshot", (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        setFila(mapFila(payload.fila || []));
+        setTurnoActual(mapTurno(payload.turnoEnVentanilla));
+        setAtendiendo(Boolean(payload.turnoEnVentanilla));
+      } catch (error) {
+        console.error("Error parseando SSE admin:", error);
+      }
+    });
 
-        try {
-          await fetchFila();
-        } catch {
-          // no-op
-        }
+    // EventSource ya reintenta solo; evitamos cerrar/reconectar manualmente para no generar flood.
+    stream.onerror = async () => {
+      const now = Date.now();
+      if (now - lastFallbackFetchRef.current < 15000) {
+        return;
+      }
+      lastFallbackFetchRef.current = now;
 
-        reconnectTimeoutRef.current = setTimeout(connectStream, 2000);
-      };
-    } catch (error) {
-      console.error("No se pudo iniciar stream SSE admin:", error);
-    }
-  };
+      try {
+        await fetchFila();
+      } catch {
+        // no-op
+      }
+    };
+  } catch (error) {
+    console.error("No se pudo iniciar stream SSE admin:", error);
+  }
 
-  connectStream();
   return () => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
     if (streamRef.current) {
       streamRef.current.close();
     }
