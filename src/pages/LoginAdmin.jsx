@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { LogIn } from "../helpers/login";
+import { saveAuthTokens } from "../helpers/authStorage";
 import { User, Lock, LogIn as LogInIcon } from "lucide-react"; // Iconos modernos
 import { useTheme } from "../context/ThemeContext";
 
@@ -28,9 +29,9 @@ const LoginAdmin = ({ cambiarLogin }) => {
 
     setLoading(true);
     try {
-      const token = await LogIn(user, password);
-      if (token) {
-        localStorage.setItem("token", token.token);
+      const authResponse = await LogIn(user, password);
+      if (authResponse?.token) {
+        saveAuthTokens(authResponse);
         cambiarLogin();
         navigate("/admin/homeAdmin");
       } else {
