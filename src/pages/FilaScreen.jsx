@@ -1,8 +1,9 @@
 import { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
-import { initializeDatabase } from "../data/dataFila.js";
 import { getTramites, postTurnoEnFila } from "../helpers/filaApi.js";
+import { isConfigMissingError } from "../helpers/serviceErrors";
+import { saveTurnoActivo } from "../helpers/turnoStorage";
 import { AlertCircle, CheckCircle } from "lucide-react";
 
 const FilaScreen = () => {
@@ -14,21 +15,37 @@ const FilaScreen = () => {
   const [showWarning, setShowWarning] = useState(false);
   const [tramites, setTramites] = useState([]);
   const [errorLegajo, setErrorLegajo] = useState("");
+  const [loadingTramites, setLoadingTramites] = useState(true);
+  const [serviceError, setServiceError] = useState("");
+  const isFormDisabled = loadingTramites || Boolean(serviceError);
+  const submitButtonClass = isFormDisabled
+    ? "w-full py-3.5 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-200 dark:shadow-none flex items-center justify-center gap-2 opacity-60 cursor-not-allowed"
+    : "w-full py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-200 dark:shadow-none transition-all hover:-translate-y-1 flex items-center justify-center gap-2";
 
   useEffect(() => {
-    initializeDatabase();
     const fetchTramites = async () => {
+      setLoadingTramites(true);
+      setServiceError("");
       try {
         const tramitesData = await getTramites();
-        setTramites(tramitesData);
+        setTramites(Array.isArray(tramitesData) ? tramitesData : []);
       } catch (error) {
         console.error("Error fetching tramites:", error);
+        setTramites([]);
+        if (isConfigMissingError(error)) {
+          setServiceError("El módulo de turnos no está configurado. Contacta al administrador.");
+        } else {
+          setServiceError("Servicio de turnos no disponible en este momento. Intenta nuevamente en unos minutos.");
+        }
+      } finally {
+        setLoadingTramites(false);
       }
     };
     fetchTramites();
   }, []);
 
   const handleTramiteChange = (e) => {
+    if (isFormDisabled) return;
     const selectedTramite = e.target.value;
     setTramite(selectedTramite);
     const selectedIndex = tramites.findIndex(t => t.descripcion === selectedTramite) + 1;
@@ -36,6 +53,7 @@ const FilaScreen = () => {
     setShowWarning(selectedTramite.endsWith("*"));
   };
   const handleLegajoChange = (e) => {
+    if (isFormDisabled) return;
     const value = e.target.value;
     setLegajo(value);
     if(value.length > 0 && value.length !== 5){
@@ -47,14 +65,20 @@ const FilaScreen = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isFormDisabled) return;
     if(!noLegajo && legajo.length !== 5) return;
     try {
       const legajoAEnviar = noLegajo ? null : legajo;
       const turnoData = await postTurnoEnFila(legajoAEnviar, indexTramite);
-      sessionStorage.setItem("turnoActivo", JSON.stringify(turnoData));
+      saveTurnoActivo(turnoData);
       navigate("/whatsapp");
     } catch (error) {
       console.error("Error creando turno:", error);
+      if (isConfigMissingError(error)) {
+        setServiceError("El módulo de turnos no está configurado. Contacta al administrador.");
+      } else {
+        setServiceError("No se pudo solicitar el turno. Intenta nuevamente en unos minutos.");
+      }
     }
   };
 
@@ -79,7 +103,7 @@ const FilaScreen = () => {
             maxLength="5"
             value={legajo}
             onChange={handleLegajoChange}
-            disabled={noLegajo}
+            disabled={noLegajo || isFormDisabled}
           />
           {errorLegajo && !noLegajo && <p className="text-red-500 text-xs mt-1 font-medium">{errorLegajo}</p>}
         </div>
@@ -92,7 +116,9 @@ const FilaScreen = () => {
               id="noLegajo"
               className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
               checked={noLegajo}
+              disabled={isFormDisabled}
               onChange={(e) => {
+                if (isFormDisabled) return;
                 setNoLegajo(e.target.checked);
                 if(e.target.checked) {
                   setLegajo(""); // Limpiamos legajo si marca que no tiene
@@ -114,6 +140,7 @@ const FilaScreen = () => {
                 value={tramite}
                 onChange={handleTramiteChange}
                 required
+                disabled={isFormDisabled}
               >
                 <option value="">Seleccione una opción...</option>
                 {tramites.map((t, index) => (
@@ -125,6 +152,18 @@ const FilaScreen = () => {
               </div>
             </div>
           </div>
+
+          {loadingTramites && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-slate-600 dark:text-slate-300">
+              Cargando trámites...
+            </div>
+          )}
+
+          {!loadingTramites && serviceError && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl p-4 text-red-700 dark:text-red-300">
+              {serviceError}
+            </div>
+          )}
 
           {/* Warning Alert */}
           {/* CORRECCIÓN 2: Adaptación completa a modo oscuro (Fondo transparente oscuro y texto claro) */}
@@ -141,7 +180,8 @@ const FilaScreen = () => {
           {/* CORRECCIÓN 3: dark:shadow-none para evitar sombras blancas brillantes */}
           <button
             type="submit"
-            className="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-200 dark:shadow-none transition-all hover:-translate-y-1 flex items-center justify-center gap-2"
+            disabled={isFormDisabled}
+            className={submitButtonClass}
           >
             Confirmar Turno
             <CheckCircle size={20} />

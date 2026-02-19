@@ -1,7 +1,17 @@
 import axios from "axios";
 import { BACKEND_URL } from "./config";
+import { createServiceError, SERVICE_ERROR_CODES } from "./serviceErrors";
 
 const API_BASE_URL = BACKEND_URL;
+
+const ensureBackendConfigured = () => {
+  if (!API_BASE_URL) {
+    throw createServiceError(
+      SERVICE_ERROR_CODES.CONFIG_MISSING,
+      "El servicio de turnos no está configurado (VITE_API_URL)."
+    );
+  }
+};
  
 // --- REPORTES (DASHBOARD) ---
 export const getDatosReportes = async () => {
@@ -35,6 +45,7 @@ export const getFila = async () => {
 
 export const postTurnoEnFila = async (legajo, idTramite) => {
   try {
+    ensureBackendConfigured();
     const turnoData = {
       legajo: legajo,
       idTramite: idTramite
@@ -43,7 +54,14 @@ export const postTurnoEnFila = async (legajo, idTramite) => {
     return response.data;
   } catch (error) {
     console.error("Error posting turno:", error);
-    throw error;
+    if (error?.code === SERVICE_ERROR_CODES.CONFIG_MISSING) {
+      throw error;
+    }
+    throw createServiceError(
+      SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
+      "El servicio de turnos no está disponible.",
+      error
+    );
   }
 };
 
@@ -57,6 +75,20 @@ export const personasAdelanteEnLaFila = async (idTurno) => {
     return response.data;
   } catch (error) {
     console.error("Error fetching personas delante:", error);
+    throw error;
+  }
+};
+
+export const personasAdelantePorToken = async (publicToken) => {
+  if (!publicToken) throw new Error("publicToken is required");
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/Fila/ObtenerCantidadDePersonasAdelantePorToken`, {
+      params: { publicToken }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching personas por token:", error);
     throw error;
   }
 };
@@ -93,6 +125,18 @@ export const cancelarTurno = async (idTurno) => {
     throw error;
   }
 };
+
+export const cancelarTurnoPorToken = async (publicToken) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/api/Fila/cancelar-por-token`, {
+      publicToken,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error cancelando turno por token:", error);
+    throw error;
+  }
+};
 // --- TURNOS (Individuales) ---
 export const getTurnos = async () => {
   try {
@@ -120,6 +164,18 @@ export const getTurnoById = async (idTurno) => {
     throw error;
   }
 };
+
+export const getTurnoActivoPorToken = async (publicToken) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/Turno/ObtenerTurnoActivo`, {
+      params: { publicToken },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching turno por token:", error);
+    throw error;
+  }
+};
 export const getTurnoEnVentanilla = async () => {
   const resp = await axios.get(`${API_BASE_URL}/api/Fila/TurnoEnVentanilla`, {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -141,14 +197,41 @@ export const registrarTelefonoEnTurno = async (idTurno, telefono) => {
   }
 };
 
+export const registrarTelefonoEnTurnoPorToken = async (publicToken, telefono) => {
+  try {
+      const response = await axios.put(`${API_BASE_URL}/api/Fila/RegistrarTelefono`, {
+          publicToken,
+          telefono
+      });
+      return response.data;
+  } catch (error) {
+      console.error("Error en registrarTelefonoEnTurnoPorToken:", error);
+      throw error;
+  }
+};
+
 
 // --- TRAMITES ---
 export const getTramites = async () => {
   try {
+    ensureBackendConfigured();
     const response = await axios.get(`${API_BASE_URL}/api/Tramite`);
+    if (!Array.isArray(response.data)) {
+      throw createServiceError(
+        SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
+        "Formato de respuesta inválido para trámites."
+      );
+    }
     return response.data;
   } catch (error) {
     console.error("Error fetching tramites:", error);
-    throw error;
+    if (error?.code === SERVICE_ERROR_CODES.CONFIG_MISSING) {
+      throw error;
+    }
+    throw createServiceError(
+      SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE,
+      "El servicio de turnos no está disponible.",
+      error
+    );
   }
 };

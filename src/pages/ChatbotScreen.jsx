@@ -1,21 +1,60 @@
 import { useEffect,useState,useRef } from "react";
 import { sendMessageToChatbot } from "../helpers/chatbotApi";
 import { verificarConexionChat } from "../helpers/verificationConnection";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { SERVICE_ERROR_CODES, isConfigMissingError } from "../helpers/serviceErrors";
 import { Send, Bot, User, Loader2 } from "lucide-react"; // Iconos
 import PageLayout from "../components/layout/PageLayout";
+
+const INITIAL_MESSAGE_DELAY_MS = 1200;
 
 const ChatbotScreen = () => {
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [chatAvailable, setChatAvailable] = useState(false);
+  const [chatStatusChecked, setChatStatusChecked] = useState(false);
+  const [chatErrorType, setChatErrorType] = useState(null);
   const messagesEndRef = useRef(null);
+  const isWaitingBotResponse = isLoading || !chatStatusChecked;
+  const botLoadingText = chatStatusChecked ? "Pensando..." : "Conectando...";
 
   useEffect(() => {
-    verificarConexionChat();
-    // Mensaje de bienvenida inicial (opcional)
-    setChatHistory([{ autor: "bot", contenido: "¡Hola! Soy Uteniano 😎. ¿En qué puedo ayudarte hoy?" }]);
+    let isCancelled = false;
+
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const checkConnection = async () => {
+      let healthResponded = false;
+      let healthAvailable = false;
+      let healthReason = SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE;
+
+      verificarConexionChat().then((result) => {
+        healthResponded = true;
+        healthAvailable = Boolean(result?.ok);
+        healthReason = result?.reason || SERVICE_ERROR_CODES.SERVICE_UNAVAILABLE;
+      });
+
+      await sleep(INITIAL_MESSAGE_DELAY_MS);
+
+      if (isCancelled) return;
+
+      const available = healthResponded && healthAvailable;
+      setChatAvailable(Boolean(available));
+      setChatStatusChecked(true);
+      setChatErrorType(available ? null : healthReason);
+      if (available) {
+        setChatHistory([{ autor: "bot", contenido: "¡Hola! Soy Uteniano 😎. ¿En qué puedo ayudarte hoy?" }]);
+      } else if (healthReason === SERVICE_ERROR_CODES.CONFIG_MISSING) {
+        setChatHistory([{ autor: "bot", contenido: "El asistente no está configurado. Contacta al administrador." }]);
+      } else {
+        setChatHistory([{ autor: "bot", contenido: "El asistente no está disponible en este momento." }]);
+      }
+    };
+    checkConnection();
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   // Auto-scroll al fondo cuando llega un mensaje nuevo
@@ -25,7 +64,7 @@ const ChatbotScreen = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault(); 
-    if (!message.trim()) return;
+    if (!chatAvailable || !message.trim()) return;
 
     const currentMsg = message;
     setMessage("");
@@ -41,9 +80,12 @@ const ChatbotScreen = () => {
       ]);
     } catch (error) {
       console.error("Error al enviar mensaje:", error);
+      const unavailableMessage = isConfigMissingError(error)
+        ? "El asistente no está configurado. Contacta al administrador."
+        : "Lo siento, tuve un problema de conexión. Intenta de nuevo.";
       setChatHistory((prev) => [
         ...prev,
-        { autor: "bot", contenido: "Lo siento, tuve un problema de conexión. Intenta de nuevo." },
+        { autor: "bot", contenido: unavailableMessage },
       ]);
     } finally {
       setIsLoading(false);
@@ -64,9 +106,10 @@ const ChatbotScreen = () => {
                 <Bot className="text-white w-6 h-6" />
             </div>
             <div>
-                <h3 className="text-white font-bold text-lg">Soy Uteniano 😎</h3>
+                <h3 className="text-white font-bold text-lg">Uteniano 😎</h3>
                 <p className="text-blue-100 dark:text-blue-300 text-xs flex items-center gap-1">
-                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> En línea
+                    <span className={`w-2 h-2 rounded-full ${chatAvailable ? "bg-green-400 animate-pulse" : "bg-red-400"}`}></span>
+                    {chatAvailable ? "En línea" : chatErrorType === SERVICE_ERROR_CODES.CONFIG_MISSING ? "Sin configurar" : "No disponible"}
                 </p>
             </div>
           </div>
@@ -108,11 +151,11 @@ const ChatbotScreen = () => {
             ))}
 
             {/* Indicador de "Escribiendo..." */}
-            {isLoading && (
+            {isWaitingBotResponse && (
               <div className="flex justify-start w-full">
                  <div className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 px-4 py-2 rounded-full rounded-tl-none animate-pulse">
                     <Loader2 className="w-4 h-4 text-slate-500 dark:text-slate-400 animate-spin" />
-                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Pensando...</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{botLoadingText}</span>
                  </div>
               </div>
             )}
@@ -127,14 +170,14 @@ const ChatbotScreen = () => {
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Escribe tu consulta aquí..."
+                placeholder={chatAvailable ? "Escribe tu consulta aquí..." : "Asistente no disponible"}
                 // dark:bg-slate-800, dark:text-white para la escritura
                 className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all outline-none"
-                disabled={isLoading}
+                disabled={isWaitingBotResponse || !chatAvailable}
               />
               <button
                 type="submit"
-                disabled={isLoading || !message.trim()}
+                disabled={isWaitingBotResponse || !chatAvailable || !message.trim()}
                 // Botón deshabilitado adaptado
                 className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all shadow-lg hover:shadow-blue-200 dark:shadow-none active:scale-95 flex items-center justify-center"
               >
@@ -144,7 +187,6 @@ const ChatbotScreen = () => {
           </div>
         </div>
         
-        <ToastContainer position="bottom-right" theme="colored" />
       </div>
     </PageLayout>
   );

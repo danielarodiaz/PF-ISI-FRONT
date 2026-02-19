@@ -1,13 +1,14 @@
 import { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { personasAdelanteEnLaFila, getTurnoById, cancelarTurno } from "../helpers/filaApi";
+import { personasAdelantePorToken, getTurnoActivoPorToken, cancelarTurnoPorToken } from "../helpers/filaApi";
 import { Users, Clock, LogOut } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";
+import { clearTurnoActivo, getTurnoActivoRef, saveTurnoActivo } from "../helpers/turnoStorage";
 
 const TurnoPage = () => {
   const navigate = useNavigate();
   
-  const [turnoActual, setTurnoActual] = useState("");
+  const [numeroTurno, setNumeroTurno] = useState("");
   const [esTurno, setEsTurno] = useState(false);
   const [personasAdelante, setPersonasAdelante] = useState(5);
   const [tiempoEspera, setTiempoEspera] = useState(10);
@@ -16,55 +17,60 @@ const TurnoPage = () => {
   const [porAtender, setPorAtender] = useState(false);
 
   // ... (función obtenerTurno igual que antes)
-  const obtenerTurno = async (idTurno) => {
+  const obtenerTurno = async (publicToken) => {
     try {
-      let turnoData = await getTurnoById(idTurno);
-      // No guardamos en session storage aquí para evitar re-escrituras innecesarias si ya vamos a salir
-      // sessionStorage.setItem(`turno_${idTurno}`, JSON.stringify(turnoData)); 
-      
+      let turnoData = await getTurnoActivoPorToken(publicToken);
+      saveTurnoActivo(turnoData);
       setDatosTurno(turnoData);
-      fetchPersonasAdelante(turnoData);
-      setTurnoActual(turnoData.nombreTurno);
+      setNumeroTurno(turnoData.nombreTurno);
+      fetchPersonasAdelante(turnoData, publicToken);
     } catch (error) {
       console.error("Error obteniendo turno:", error);
     }
   };
 
-  const fetchPersonasAdelante = async (turnoData) => {
+  const fetchPersonasAdelante = async (turnoData, publicToken) => {
     try {
-      const personas = await personasAdelanteEnLaFila(turnoData.idTurno);
+      const personas = await personasAdelantePorToken(publicToken);
       setPersonasAdelante(personas);
       setTiempoEspera(personas * 3);
       setProgreso((( (personas + 1) - personas) / (personas + 1)) * 100);
 
       // --- CORRECCIÓN AQUÍ ---
-      // Si el turno finalizó (estado 3), limpiamos el storage ANTES de navegar
-      if(turnoData.idEstadoTurno == 3) {
-        sessionStorage.removeItem("turnoActivo"); // <--- IMPORTANTE: Borrar la clave principal
-        sessionStorage.removeItem(`turno_${turnoData.idTurno}`); // Limpieza extra
+      // Si el turno finalizó o fue cancelado (estado 3/4), limpiamos storage antes de navegar
+      if(turnoData.idEstadoTurno == 3 || turnoData.idEstadoTurno == 4) {
+        clearTurnoActivo();
         navigate("/");
         return; // Detenemos la ejecución
       }
       // -----------------------
 
       if (personas === 0 && turnoData.idEstadoTurno == 1) {
+        setEsTurno(false);
         setPorAtender(true);
-        setTurnoActual("Te están por atender");
       } else if (turnoData.idEstadoTurno == 2) {
         setEsTurno(true);
-        setTurnoActual(`¡Es tu turno ${turnoData.nombreTurno}!`);
+        setPorAtender(false);
+      } else {
+        setEsTurno(false);
+        setPorAtender(false);
       }
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
+  const getTituloPrincipal = () => {
+    if (esTurno) return "¡Es tu turno!";
+    if (porAtender) return "Te están por atender";
+    return "Tu número es";
+  };
+
   useEffect(() => {
-    const turnoGuardado = sessionStorage.getItem("turnoActivo");
-    if (turnoGuardado) {
-      const data = JSON.parse(turnoGuardado);
-      obtenerTurno(data.idTurno);
-      const interval = setInterval(() => obtenerTurno(data.idTurno), 5000);
+    const turnoRef = getTurnoActivoRef();
+    if (turnoRef?.publicToken) {
+      obtenerTurno(turnoRef.publicToken);
+      const interval = setInterval(() => obtenerTurno(turnoRef.publicToken), 5000);
       return () => clearInterval(interval);
     } else {
       navigate("/");
@@ -79,14 +85,11 @@ const TurnoPage = () => {
 
   // Función para cancelar manualmente
   const handleCancel = async () => {
-    if (datosTurno?.idTurno) {
+    const turnoRef = getTurnoActivoRef();
+    if (turnoRef?.publicToken) {
       try {
-        // 1. Llamar a la API para que cambie el estado en la DB a "Cancelado" (4)
-        await cancelarTurno(datosTurno.idTurno); 
-        
-        // 2. Limpiar storage y navegar
-        sessionStorage.removeItem("turnoActivo");
-        sessionStorage.removeItem(`turno_${datosTurno.idTurno}`);
+        await cancelarTurnoPorToken(turnoRef.publicToken); 
+        clearTurnoActivo();
         navigate("/");
       } catch (error) {
         console.error("Error al cancelar el turno en el servidor:", error);
@@ -100,9 +103,9 @@ const TurnoPage = () => {
         
         {/* Card Principal */}
         <div className={`transform transition-all duration-500 hover:scale-105 rounded-3xl p-8 shadow-2xl text-white ${getStatusColor()}`}>
-          <h2 className="text-xl opacity-90 mb-2 font-medium">Tu número es</h2>
+          <h2 className="text-xl opacity-90 mb-2 font-medium">{getTituloPrincipal()}</h2>
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter drop-shadow-lg">
-            {turnoActual}
+            {numeroTurno}
           </h1>
           {esTurno && (
              <p className="mt-4 text-lg font-semibold bg-white/20 py-2 px-4 rounded-full inline-block backdrop-blur-sm animate-pulse">

@@ -2,6 +2,7 @@ import { Link, useLocation, Outlet } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { Sun, Moon, MessageCircle, HelpCircle, List, Home } from "lucide-react"; 
 import logoUTN from "../../assets/UTN-TUC.png"; 
+import logoInfoTrack from "../../assets/LogoInfo_track.png";
 
 const PublicLayout = () => {
   const { theme, toggleTheme } = useTheme();
@@ -28,7 +29,7 @@ const PublicLayout = () => {
           
           {/* Logo y Home */}
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src={logoUTN} alt="UTN Logo" className="h-10 w-auto" />
+            <img src={logoUTN} alt="UTN Logo" className="h-8 w-auto" />
             {/* <span className="font-bold text-lg hidden sm:block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Fila Virtual
             </span> */}
@@ -67,6 +68,16 @@ const PublicLayout = () => {
       <main className="flex-grow container mx-auto px-4 py-8 animate-in fade-in zoom-in duration-500">
         <Outlet /> 
       </main>
+
+      <footer className="w-full border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950/70 backdrop-blur-md">
+        <div className="container mx-auto px-4 py-3 mb-16 md:mb-0 flex flex-col items-center justify-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+          <img src={logoInfoTrack} alt="InfoTrack Logo" className="h-5 w-auto" />
+          <span>
+            Organizacion potenciada con <strong>InfoTrack</strong>, un producto de{" "}
+            <strong>Ludem Software</strong>.
+          </span>
+        </div>
+      </footer>
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-around py-3 z-50 safe-area-pb">

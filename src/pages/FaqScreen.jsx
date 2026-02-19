@@ -1,19 +1,35 @@
 import { useEffect,useState } from "react";
 import { getFaqs } from "../helpers/faqApi.js";
+import { isConfigMissingError } from "../helpers/serviceErrors";
 import { ChevronDown, ChevronUp, HelpCircle, MessageCircleQuestion } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";
 
 const FaqScreen = () => {
   const [faqData, setFaqData] = useState([]);
   const [expanded, setExpanded] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setErrorMsg("");
       try {
         const data = await getFaqs();
+        if (!Array.isArray(data)) {
+          throw new Error("Formato de respuesta inválido para FAQs.");
+        }
         setFaqData(data);
       } catch (error) {
         console.error("Error fetching FAQ data:", error);
+        setFaqData([]);
+        if (isConfigMissingError(error)) {
+          setErrorMsg("El módulo de consultas no está configurado. Contacta al administrador.");
+        } else {
+          setErrorMsg("Servicio de consultas no disponible en este momento. Intenta nuevamente en unos minutos.");
+        }
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -39,6 +55,21 @@ const FaqScreen = () => {
 
         {/* Acordeón */}
         <div className="space-y-4">
+          {loading && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 text-slate-600 dark:text-slate-300">
+              Cargando preguntas frecuentes...
+            </div>
+          )}
+          {!loading && errorMsg && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl p-5 text-red-700 dark:text-red-300">
+              {errorMsg}
+            </div>
+          )}
+          {!loading && !errorMsg && faqData.length === 0 && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 text-slate-600 dark:text-slate-300">
+              No hay preguntas frecuentes para mostrar.
+            </div>
+          )}
           {faqData.map((faq, index) => {
             const isOpen = expanded === index;
             return (

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registrarTelefonoEnTurno } from "../helpers/filaApi";
+import { registrarTelefonoEnTurno, registrarTelefonoEnTurnoPorToken } from "../helpers/filaApi";
 import { MessageCircle, Phone, CheckCircle, XCircle } from "lucide-react";
 import Swal from "sweetalert2";
 import PageLayout from "../components/layout/PageLayout";
+import { getTurnoActivo, getTurnoActivoRef } from "../helpers/turnoStorage";
 
 const WhatsAppScreen = () => {
   const navigate = useNavigate();
@@ -36,13 +37,16 @@ const WhatsAppScreen = () => {
 
     // 3. Si pasó la validación, procedemos con el registro
     try {
-        const turnoActivoStr = sessionStorage.getItem("turnoActivo");
-        
-        if (turnoActivoStr) {
-            const turnoData = JSON.parse(turnoActivoStr);
-            await registrarTelefonoEnTurno(turnoData.idTurno, telefono);
-            console.log("Teléfono vinculado con éxito");
+        const turnoData = getTurnoActivo();
+        const turnoRef = getTurnoActivoRef();
+
+        if (turnoData?.idTurno) {
+          await registrarTelefonoEnTurno(turnoData.idTurno, telefono);
+        } else if (turnoRef?.publicToken) {
+          await registrarTelefonoEnTurnoPorToken(turnoRef.publicToken, telefono);
         }
+
+        console.log("Teléfono vinculado con éxito");
         // Solo navegamos si el registro fue exitoso o si no había turno (fallback)
         navigate("/turno");
     } catch (error) {

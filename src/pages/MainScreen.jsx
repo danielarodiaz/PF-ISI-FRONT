@@ -4,6 +4,7 @@ import filavirtual from "../assets/filaVirtual.jpg"; // Asegúrate de tener esta
 import FAQ from "../assets/FAQ.png";
 import chatbot from "../assets/chatbot.png";
 import { Clock, Info, MapPin } from "lucide-react"; // Iconos nuevos
+import { getTurnoActivo, getTurnoActivoRef } from "../helpers/turnoStorage";
 
 // Componente de Tarjeta reutilizable (lo que ya tenías pero más limpio)
 const CardOption = ({ to, img, title, subtitle, colorInfo }) => (
@@ -23,9 +24,16 @@ const MainScreen = () => {
   const estaAbierto = true; // Deberías calcular esto con la hora actual
 
   useEffect(() => {
-    // Verificar si hay turno en sessionStorage al cargar
-    const turno = sessionStorage.getItem("turnoActivo");
-    if (turno) setTurnoActivo(JSON.parse(turno));
+    const turno = getTurnoActivo();
+    if (turno) {
+      setTurnoActivo(turno);
+      return;
+    }
+
+    const turnoRef = getTurnoActivoRef();
+    if (turnoRef?.publicToken) {
+      setTurnoActivo({ nombreTurno: turnoRef.nombreTurno || "Turno activo", publicToken: turnoRef.publicToken });
+    }
   }, []);
 
   return (
