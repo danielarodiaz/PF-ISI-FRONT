@@ -3,6 +3,8 @@ import { sendMessageToChatbot, sendMessageToChatbotStream } from "../helpers/cha
 import { verificarConexionChat } from "../helpers/verificationConnection";
 import { SERVICE_ERROR_CODES, isBadRequestError, isConfigMissingError, isTooManyRequestsError } from "../helpers/serviceErrors";
 import { Send, Bot, User, Loader2, RotateCcw } from "lucide-react"; // Iconos
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import PageLayout from "../components/layout/PageLayout";
 
 const INITIAL_MESSAGE_DELAY_MS = 1200;
@@ -79,6 +81,38 @@ const saveChatSession = (chatHistory, conversationId) => {
 
 const isTransientSystemBotMessage = (msg) =>
   msg?.autor === "bot" && TRANSIENT_SYSTEM_MESSAGES.has(msg?.contenido || "");
+
+const BotMarkdownMessage = ({ content }) => (
+  <ReactMarkdown
+    remarkPlugins={[remarkGfm]}
+    components={{
+      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+      ul: ({ children }) => <ul className="list-disc pl-5 mb-2 last:mb-0">{children}</ul>,
+      ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 last:mb-0">{children}</ol>,
+      li: ({ children }) => <li className="mb-1 last:mb-0">{children}</li>,
+      a: ({ href, children }) => (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="underline text-blue-600 dark:text-blue-300"
+        >
+          {children}
+        </a>
+      ),
+      code: ({ children }) => (
+        <code className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-700">{children}</code>
+      ),
+      pre: ({ children }) => (
+        <pre className="p-2 rounded bg-slate-100 dark:bg-slate-700 overflow-x-auto">{children}</pre>
+      ),
+      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+      em: ({ children }) => <em className="italic">{children}</em>,
+    }}
+  >
+    {content || ""}
+  </ReactMarkdown>
+);
 
 const ChatbotScreen = () => {
   const initialSessionRef = useRef(loadChatSession());
@@ -329,7 +363,11 @@ const ChatbotScreen = () => {
                             : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-700 rounded-tl-none" // Burbuja de Bot se oscurece
                         }`}
                     >
-                        {msg.contenido}
+                        {msg.autor === "bot" ? (
+                          <BotMarkdownMessage content={msg.contenido} />
+                        ) : (
+                          msg.contenido
+                        )}
                     </div>
                 </div>
               </div>

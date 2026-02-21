@@ -2,7 +2,7 @@ import { Link, useLocation, Outlet } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { Sun, Moon, MessageCircle, HelpCircle, List, Home, LayoutDashboard, BarChart3 } from "lucide-react"; 
 import logoUTN from "../../assets/UTN-TUC.png"; 
-import logoInfoTrack from "../../assets/LogoInfo_track.png";
+import Footer from "../Footer";
 import { getTurnoActivoRef } from "../../helpers/turnoStorage";
 
 const PublicLayout = () => {
@@ -83,15 +83,7 @@ const PublicLayout = () => {
         <Outlet /> 
       </main>
 
-      <footer className="w-full border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950/70 backdrop-blur-md">
-        <div className="container mx-auto px-4 py-3 mb-16 md:mb-0 flex flex-col items-center justify-center gap-1 text-xs text-slate-600 dark:text-slate-400">
-          <img src={logoInfoTrack} alt="InfoTrack Logo" className="h-5 w-auto" />
-          <span>
-            Organizacion potenciada con <strong>InfoTrack</strong>, un producto de{" "}
-            <strong>Ludem Software</strong>.
-          </span>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-around py-3 z-50 safe-area-pb">

@@ -72,7 +72,7 @@ const MainScreen = () => {
             Gestión de Alumnos <span className="text-blue-600">UTN FRT</span>
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-lg">
-            Bienvenido al sistema de atención virtual. Gestiona tus trámites sin filas físicas.
+            Bienvenido al sistema de atención virtual.\nGestiona tus trámites sin filas físicas.
           </p>
           
           {/* Indicadores de Estado */}
