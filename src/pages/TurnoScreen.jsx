@@ -4,10 +4,15 @@ import { cancelarTurnoPorToken, createTurnoActivoStream } from "../helpers/filaA
 import { Users, Clock, LogOut } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";
 import { clearTurnoActivo, getTurnoActivoRef, saveTurnoActivo, updateTurnoActivoRef } from "../helpers/turnoStorage";
+import { getFila, getDatosReportes } from "../helpers/filaApi";
 
-const TurnoPage = () => {
+
+export const TurnoPage = () => {
   const navigate = useNavigate();
-  
+  const { turnoActual, Fila, setFila } = useTurno();
+  const [posicionInicial, setPosicionInicial] = useState(null);
+  const [promedioFranja, setPromedioFranja] = useState(15);
+
   const [numeroTurno, setNumeroTurno] = useState("");
   const [esTurno, setEsTurno] = useState(false);
   const [personasAdelante, setPersonasAdelante] = useState(5);
@@ -28,10 +33,15 @@ const TurnoPage = () => {
     saveTurnoActivo(turnoData);
     setDatosTurno(turnoData);
     setNumeroTurno(turnoData.nombreTurno);
+    
     const personasActual = personas ?? 0;
+
+    // --- LÓGICA DE BARRA DE PROGRESO ---
+    // Recuperamos o guardamos la posición inicial
     if (initialAheadRef.current === null) {
       const ref = getTurnoActivoRef();
       const persistedInitial = Number(ref?.initialPersonasAdelante);
+      
       if (Number.isFinite(persistedInitial) && persistedInitial >= 0) {
         initialAheadRef.current = persistedInitial;
       } else {
@@ -40,22 +50,29 @@ const TurnoPage = () => {
       }
     }
 
-    const initialAhead = Math.max(0, Number(initialAheadRef.current ?? personasActual));
+    const initialAhead = Math.max(0, Number(initialAheadRef.current));
     const denominator = Math.max(1, initialAhead);
     const progressed = Math.max(0, initialAhead - personasActual);
-    const progresoReal = Math.round((progressed / denominator) * 100);
+    
+    // Calculamos el porcentaje
+    let progresoReal = Math.round((progressed / denominator) * 100);
+    progresoReal = Math.max(5, Math.min(95, progresoReal));
 
+    // --- SETEO DE ESTADOS ---
     setPersonasAdelante(personasActual);
-    setTiempoEspera(personasActual * 3);
-    setProgreso(initialAhead === 0 ? 100 : progresoReal);
+    setTiempoEspera(personasActual * promedioFranja); 
+    setProgreso(initialAhead === 0 ? 95 : progresoReal);
 
+    // --- LÓGICA DE ESTADO DEL TURNO ---
+    // Si ya lo atendieron o se canceló, lo sacamos de la pantalla
     if (turnoData.idEstadoTurno === 3 || turnoData.idEstadoTurno === 4) {
       clearTurnoActivo();
       navigate("/");
       return;
     }
 
-    if ((personas ?? 0) === 0 && turnoData.idEstadoTurno === 1) {
+    // Calculamos en qué estado visual está (esperando, por atender, es turno)
+    if (personasActual === 0 && turnoData.idEstadoTurno === 1) {
       setEsTurno(false);
       setPorAtender(true);
     } else if (turnoData.idEstadoTurno === 2) {
@@ -113,6 +130,52 @@ const TurnoPage = () => {
       }
     };
   }, [navigate]);
+
+
+  useEffect(() => {
+    const fetchPromedio = async () => {
+      try {
+        const reportes = await getDatosReportes();
+        if (!reportes || reportes.length === 0) return;
+
+        const ahora = new Date();
+        const horaDecimal = ahora.getHours() + ahora.getMinutes() / 60;
+
+        // Definimos las franjas de la institución
+        const esManana = horaDecimal >= 9 && horaDecimal <= 13;
+        const esTarde = horaDecimal >= 15.5 && horaDecimal <= 20.5;
+
+        const hace7Dias = new Date();
+        hace7Dias.setDate(hace7Dias.getDate() - 7);
+
+        const atendidosFranja = reportes.filter(t => {
+           if (t.idEstadoTurno !== 3 || !t.fechaDeCreacion || !t.fechaUltimaModificacion) return false;
+           const fechaCreacion = new Date(t.fechaDeCreacion);
+           if (fechaCreacion < hace7Dias) return false;
+
+           const tHoraDec = fechaCreacion.getHours() + fechaCreacion.getMinutes() / 60;
+           if (esManana) return tHoraDec >= 9 && tHoraDec <= 13;
+           if (esTarde) return tHoraDec >= 15.5 && tHoraDec <= 20.5;
+           return false;
+        });
+
+        if (atendidosFranja.length > 0) {
+           const sumaMinutos = atendidosFranja.reduce((acc, t) => {
+              const diff = (new Date(t.fechaUltimaModificacion) - new Date(t.fechaDeCreacion)) / 60000;
+              return acc + Math.max(0, diff);
+           }, 0);
+           const promedioReal = Math.round(sumaMinutos / atendidosFranja.length);
+           setPromedioFranja(Math.max(2, promedioReal)); // Mínimo 2 min 
+        }
+      } catch (error) {
+        console.error("Error calculando el promedio:", error);
+      }
+    };
+
+    fetchPromedio();
+  }, []);
+
+
 
   const getStatusColor = () => {
     if (esTurno) return "bg-green-500 shadow-green-200 dark:shadow-none";
