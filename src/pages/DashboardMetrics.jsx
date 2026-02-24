@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { SHIFT_CONFIG, getInstitutionDecimalTime } from "../helpers/shiftConfig";
 import { getDatosReportes } from "../helpers/filaApi";
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
@@ -28,6 +29,7 @@ const DashboardMetrics = () => {
     fetchData();
   }, []);
 
+  
   // --- LÓGICA DE DATOS ---
   const turnosUltimos7Dias = useMemo(() => {
     const hace7Dias = new Date();
@@ -38,14 +40,11 @@ const DashboardMetrics = () => {
     });
   }, [rawData]);
 
- const datosTramites = useMemo(() => {
+  const datosTramites = useMemo(() => {
     const conteo = {};
     
     turnosUltimos7Dias.forEach(t => {
-      // Accedemos al objeto anidado 'tramite' y sacamos su 'descripcion'
-      // El ?. es por seguridad, por si algún turno llegara sin trámite
       const nombre = t.tramite?.descripcion || "Sin descripción"; 
-      
       conteo[nombre] = (conteo[nombre] || 0) + 1;
     });
 
@@ -55,19 +54,20 @@ const DashboardMetrics = () => {
     })).sort((a, b) => b.cantidad - a.cantidad);
   }, [turnosUltimos7Dias]);
 
-  const datosConcurrencia = useMemo(() => {
-    let manana = 0, tarde = 0, noche = 0;
+ const datosConcurrencia = useMemo(() => {
+    let manana = 0, tarde = 0;
     turnosUltimos7Dias.forEach(t => {
-      const hora = getHourInUserTimeZone(t.fechaDeCreacion);
-      if (hora === null) return;
-      if (hora >= 6 && hora < 12) manana++;
-      else if (hora >= 12 && hora < 20) tarde++;
-      else noche++;
+      // Usamos el timezone correcto para leer cuándo se creó el turno
+      const hora = getInstitutionDecimalTime(new Date(t.fechaDeCreacion));
+      if (isNaN(hora)) return;
+      
+      // Separamos Mañana/Tarde basándonos en el fin de la mañana configurado en el .env
+      if (hora <= SHIFT_CONFIG.morningEnd) manana++;
+      else tarde++;
     });
     return [
       { name: 'Mañana', value: manana, color: '#94a3b8' },
-      { name: 'Tarde', value: tarde, color: '#3b82f6' },
-      { name: 'Noche', value: noche, color: '#1e3a8a' },
+      { name: 'Tarde', value: tarde, color: '#3b82f6' }
     ];
   }, [turnosUltimos7Dias]);
 
@@ -101,7 +101,6 @@ const DashboardMetrics = () => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="nombre" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
-                {/* FIX HOVER: Cursor transparente para evitar el fondo blanco */}
                 <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                 <Bar dataKey="cantidad" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={45} />
               </BarChart>
@@ -109,10 +108,7 @@ const DashboardMetrics = () => {
           </div>
         </div>
 
-        {/* DERECHA: COLUMNA DE INDICADORES */}
-        <div className="flex flex-col gap-6">
-          
-          {/* DERECHA: COLUMNA DE INDICADORES */}
+        {/* DERECHA: COLUMNA DE INDICADORES (Corregido contenedor duplicado) */}
         <div className="flex flex-col gap-6">
           
           {/* Tarjeta 1: Concurrencia (Distribución de carga) */}
@@ -128,10 +124,11 @@ const DashboardMetrics = () => {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex justify-between mt-4 text-[10px] font-bold text-slate-500 uppercase">
+            
+            {/* 2. ELIMINAMOS LA LEYENDA "NOCHE" */}
+            <div className="flex justify-around mt-4 text-[10px] font-bold text-slate-500 uppercase">
               <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-400" /> Mañana</span>
               <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /> Tarde</span>
-              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-900" /> Noche</span>
             </div>
           </div>
 
@@ -154,15 +151,17 @@ const DashboardMetrics = () => {
           <div className="bg-white dark:bg-slate-900 shadow-lg rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Espera Promedio</h3>
              <div className="space-y-4">
+               
+               {/* 3. AHORA .map() SOLO ITERA SOBRE MAÑANA Y TARDE */}
                {datosConcurrencia.map((item, i) => {
-                 // Aquí calculamos el promedio de espera real para esa franja
-                 // En tu tesis, esto ayuda a detectar cuándo la espera supera los límites
                  const turnosFranja = turnosUltimos7Dias.filter(t => {
                     const hora = getHourInUserTimeZone(t.fechaDeCreacion);
                     if (hora === null) return false;
-                    if (item.name === 'Mañana') return hora >= 6 && hora < 12;
-                    if (item.name === 'Tarde') return hora >= 12 && hora < 20;
-                    return hora >= 20 || hora < 6;
+                    
+                    // Adaptamos el filtro a la nueva lógica
+                    if (item.name === 'Mañana') return hora < 14;
+                    if (item.name === 'Tarde') return hora >= 14;
+                    return false;
                  });
                  
                  const sumaEspera = turnosFranja.reduce((acc, t) => {
@@ -192,7 +191,6 @@ const DashboardMetrics = () => {
              <p className="text-[9px] text-slate-400 mt-4 text-center uppercase">Objetivo de Fila: &lt; 20 min</p>
           </div>
 
-        </div>
         </div>
       </div>
     </div>
