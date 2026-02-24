@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
+import OperatingHoursGuard from "./pages/OperatingHoursGuard";
 
 // Layouts
 import PublicLayout from "./components/layout/PublicLayout";
@@ -42,16 +43,19 @@ function App() {
     <ThemeProvider>
       <BrowserRouter basename={routerBaseName}>
         <Routes>
-          {/* RUTAS PÚBLICAS
-            Todas estas rutas comparten el Navbar y el fondo del PublicLayout 
-          */}
+            {/* RUTAS PÚBLICAS
+              Todas estas rutas comparten el Navbar y el fondo del PublicLayout 
+            */}
           <Route element={<PublicLayout />}>
-            <Route path="/" element={<MainScreen />} />
-            <Route path="/fila" element={<FilaScreen />} />
-            <Route path="/turno" element={<TurnoScreen />} />
-            <Route path="/chatbot" element={<ChatbotScreen />} />
-            <Route path="/faq" element={<FaqScreen />} />
-            <Route path="/whatsapp" element={<WhatsAppScreen />} />
+            <Route element={<OperatingHoursGuard />}>
+                <Route path="/" element={<MainScreen />} />
+                <Route path="/fila" element={<FilaScreen />} />
+                <Route path="/turno" element={<TurnoScreen />} />
+                <Route path="/chatbot" element={<ChatbotScreen />} />
+                <Route path="/faq" element={<FaqScreen />} />
+                <Route path="/whatsapp" element={<WhatsAppScreen />} />
+            <Route/>   
+          </Route>
             <Route
               path="/admin/*"
               element={
@@ -59,19 +63,17 @@ function App() {
                   <RoutesApp />
                 </ProtectedRoutes>
               }
+            /> 
+            </Route>
+
+            {/* LOGIN ADMINISTRADOR (Sin layout público) */}
+            <Route 
+              path="/loginAdmin" 
+              element={<LoginAdmin cambiarLogin={cambiarLogin} />} 
             />
 
-            
-          </Route>
-
-          {/* LOGIN ADMINISTRADOR (Sin layout público) */}
-          <Route 
-            path="/loginAdmin" 
-            element={<LoginAdmin cambiarLogin={cambiarLogin} />} 
-          />
-
-          {/* Redirección por defecto a Home */}
-          <Route path="*" element={<Navigate to="/" />} />
+            {/* Redirección por defecto a Home */}
+            <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

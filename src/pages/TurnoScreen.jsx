@@ -9,7 +9,6 @@ import { getFila, getDatosReportes } from "../helpers/filaApi";
 
 export const TurnoPage = () => {
   const navigate = useNavigate();
-  const { turnoActual, Fila, setFila } = useTurno();
   const [posicionInicial, setPosicionInicial] = useState(null);
   const [promedioFranja, setPromedioFranja] = useState(15);
 
