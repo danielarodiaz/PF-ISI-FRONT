@@ -147,14 +147,14 @@ const HomeAdmin = () => {
       html: `
         <div class="text-left mt-4 space-y-4">
           <div>
-            <label class="block mb-2 text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}">¿Cuál fue el trámite real?</label>
+            <label class="block mb-2 text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}">¿El trámite consultado es correcto?</label>
             <select id="swal-tramite" class="w-full px-4 py-3 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'} border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
               ${opcionesHTML}
             </select>
           </div>
           <div>
             <label class="block mb-2 text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}">Comentarios (Opcional)</label>
-            <textarea id="swal-comentario" rows="3" class="w-full px-4 py-3 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'} border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ej: Vino por inscripción a equipo de fútbol..."></textarea>
+            <textarea id="swal-comentario" rows="3" class="w-full px-4 py-3 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'} border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Escriba aquí comentarios sobre el turno"></textarea>
           </div>
         </div>
       `,
