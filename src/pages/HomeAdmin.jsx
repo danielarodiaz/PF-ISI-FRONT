@@ -130,7 +130,9 @@ const HomeAdmin = () => {
   const finalizarAtencion = async () => {
     if (!turnoActual) return;
 
-    // Armamos las opciones del select dinámicamente
+    // Detectamos si el body tiene la clase 'dark' (asumiendo que tu ThemeContext la pone ahí)
+    const isDarkMode = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+
     const opcionesHTML = listaTramites.map(t => 
       `<option value="${t.descripcion}" ${t.descripcion === turnoActual.tramite ? 'selected' : ''}>
         ${t.descripcion}
@@ -139,18 +141,20 @@ const HomeAdmin = () => {
 
     const { value: formValues, isConfirmed } = await Swal.fire({
       title: 'Finalizar Atención',
+      // 👇 PROPIEDADES PARA EL MODO OSCURO
+      background: isDarkMode ? '#1e293b' : '#fff', // slate-800 o blanco
+      color: isDarkMode ? '#f8fafc' : '#1e293b',    // slate-50 o slate-800
       html: `
         <div class="text-left mt-4 space-y-4">
           <div>
-            <label class="block mb-2 text-sm font-bold text-slate-700">¿Cuál fue el trámite real?</label>
-            <select id="swal-tramite" class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none">
+            <label class="block mb-2 text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}">¿Cuál fue el trámite real?</label>
+            <select id="swal-tramite" class="w-full px-4 py-3 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'} border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
               ${opcionesHTML}
             </select>
-            <p class="text-xs text-slate-500 mt-1">Modificalo si el alumno se equivocó al sacar el turno.</p>
           </div>
           <div>
-            <label class="block mb-2 text-sm font-bold text-slate-700">Comentarios (Opcional)</label>
-            <textarea id="swal-comentario" rows="3" class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ej: Vino por inscripción a equipo de fútbol..."></textarea>
+            <label class="block mb-2 text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}">Comentarios (Opcional)</label>
+            <textarea id="swal-comentario" rows="3" class="w-full px-4 py-3 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'} border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ej: Vino por inscripción a equipo de fútbol..."></textarea>
           </div>
         </div>
       `,
@@ -158,7 +162,9 @@ const HomeAdmin = () => {
       showCancelButton: true,
       confirmButtonText: 'Guardar y Finalizar',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#16a34a', // Verde success
+      confirmButtonColor: '#16a34a',
+      // 👇 Color del botón de cancelar en modo oscuro
+      cancelButtonColor: isDarkMode ? '#475569' : '#64748b', 
       preConfirm: () => {
         return {
           tramiteReal: document.getElementById('swal-tramite').value,
@@ -169,17 +175,18 @@ const HomeAdmin = () => {
 
     if (isConfirmed && formValues) {
       try {
-        // 🔥 ACÁ LE PASÁS LOS NUEVOS DATOS A TU API 🔥
-        // Vas a tener que modificar putFinalizarAtencion para que acepte estos parámetros
         await putFinalizarAtencion(turnoActual.id, formValues.tramiteReal, formValues.comentario);
-        
         setAtendiendo(false);
         setTurnoActual(null);
         shootSuccessConfetti();
-        
       } catch (error) {
-        console.error("Error al finalizar:", error);
-        Swal.fire("Error", "Hubo un problema al guardar la finalización del turno.", "error");
+        Swal.fire({
+          title: "Error",
+          text: "Hubo un problema al guardar.",
+          icon: "error",
+          background: isDarkMode ? '#1e293b' : '#fff',
+          color: isDarkMode ? '#f8fafc' : '#1e293b'
+        });
       }
     }
   };
