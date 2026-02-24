@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-3 mb-16 md:mb-0 flex flex-col items-center justify-center gap-1 text-xs text-slate-600 dark:text-slate-400">
         <img src={LogoInfo_track} alt="InfoTrack Logo" className="h-5 w-auto" />
         <span>
-          Organizacion potenciada con <strong>InfoTrack</strong>, un producto de{" "}
+          Organización potenciada con <strong>InfoTrack</strong>, un producto de{" "}
           <strong>Ludem Software</strong>.
         </span>
       </div>
