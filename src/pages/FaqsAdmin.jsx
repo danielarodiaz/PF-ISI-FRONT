@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { getFaqs, postFaq, putFaq, deleteFaq } from "../helpers/faqApi"; 
+import { formatInUserTimeZone } from "../helpers/dateTime";
 
 const FaqsAdmin = () => {
   const navigate = useNavigate();
@@ -180,7 +181,7 @@ const FaqsAdmin = () => {
                             {faq.respuesta}
                         </p>
                         <p className="text-xs text-slate-400 mt-2 text-right">
-                            Última mod: {new Date(faq.ultima_modificacion).toLocaleDateString()}
+                            Última mod: {formatInUserTimeZone(faq.ultima_modificacion, { day: "2-digit", month: "2-digit", year: "numeric" })}
                         </p>
                     </div>
 

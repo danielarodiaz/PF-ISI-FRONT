@@ -3,6 +3,7 @@ import { getFaqs } from "../helpers/faqApi.js";
 import { isConfigMissingError } from "../helpers/serviceErrors";
 import { ChevronDown, ChevronUp, HelpCircle, MessageCircleQuestion } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";
+import { formatInUserTimeZone } from "../helpers/dateTime";
 
 const FaqScreen = () => {
   const [faqData, setFaqData] = useState([]);
@@ -112,7 +113,7 @@ const FaqScreen = () => {
                       </p>
                       <div className="mt-4 flex items-center justify-end">
                         <small className="text-xs text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded transition-colors">
-                          Actualizado: {new Date(faq.ultima_modificacion).toLocaleDateString()}
+                          Actualizado: {formatInUserTimeZone(faq.ultima_modificacion, { day: "2-digit", month: "2-digit", year: "numeric" })}
                         </small>
                       </div>
                     </div>

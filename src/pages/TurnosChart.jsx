@@ -3,6 +3,14 @@ import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
 import { FaFilter } from "react-icons/fa";
 import {getTurnos} from "../helpers/turnosApi";
+import {
+  getDateKeyInUserTimeZone,
+  getMonthKeyInUserTimeZone,
+  getYearKeyInUserTimeZone,
+  formatDayLabelInUserTimeZone,
+  formatMonthLabelInUserTimeZone,
+  diffMinutesBetweenUtcDates,
+} from "../helpers/dateTime";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 
@@ -28,10 +36,20 @@ const TurnosChart = () => {
         const countsAlumnos = {};
         const times = {};
         const countsTiempo = {};
+        const labelByKey = {};
         
         turnos.forEach(({ tramite, fechaDeCreacion, fechaUltimaModificacion }) => {
-          const date = new Date(fechaDeCreacion);
-          const key = filtro === "dia" ? date.toLocaleDateString() : filtro === "mes" ? date.toLocaleString("default", { month: "short", year: "numeric" }) : date.getFullYear();
+          let key = null;
+          if (filtro === "dia") key = getDateKeyInUserTimeZone(fechaDeCreacion);
+          else if (filtro === "mes") key = getMonthKeyInUserTimeZone(fechaDeCreacion);
+          else key = getYearKeyInUserTimeZone(fechaDeCreacion);
+          if (!key) return;
+
+          if (!labelByKey[key]) {
+            if (filtro === "dia") labelByKey[key] = formatDayLabelInUserTimeZone(key);
+            else if (filtro === "mes") labelByKey[key] = formatMonthLabelInUserTimeZone(key);
+            else labelByKey[key] = key;
+          }
           
           if (!countsTramites[key]) countsTramites[key] = {};
           if (!countsTramites[key][tramite.descripcion]) countsTramites[key][tramite.descripcion] = 0;
@@ -40,24 +58,26 @@ const TurnosChart = () => {
           if (!countsAlumnos[key]) countsAlumnos[key] = 0;
           countsAlumnos[key]++;
   
-          const duration = (new Date(fechaUltimaModificacion) - date) / 60000;
+          const duration = diffMinutesBetweenUtcDates(fechaDeCreacion, fechaUltimaModificacion);
+          if (duration === null) return;
           if (!times[key]) times[key] = 0;
           if (!countsTiempo[key]) countsTiempo[key] = 0;
           times[key] += duration;
           countsTiempo[key]++;
         });
   
-        const labels = Object.keys(countsTramites);
+        const keys = Object.keys(countsTramites).sort();
+        const labels = keys.map((key) => labelByKey[key] || key);
         const tramites = [...new Set(turnos.map(t => t.tramite.descripcion))];
         const tramitesDatasets = tramites.map(tramite => ({
           label: tramite,
-          data: labels.map(label => countsTramites[label][tramite] || 0),
+          data: keys.map((key) => countsTramites[key][tramite] || 0),
           backgroundColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.7)`
         }));
         
         setTramitesData({ labels, datasets: tramitesDatasets });
-        setAlumnosData({ labels, datasets: [{ label: "Alumnos atendidos", data: labels.map(label => countsAlumnos[label] || 0), backgroundColor: "rgba(54, 162, 235, 0.7)" }] });
-        setTiempoAtencionData({ labels, datasets: [{ label: "Promedio de tiempo de atención (minutos)", data: labels.map(label => times[label] / countsTiempo[label] || 0), backgroundColor: "rgba(75, 192, 192, 0.7)" }] });
+        setAlumnosData({ labels, datasets: [{ label: "Alumnos atendidos", data: keys.map((key) => countsAlumnos[key] || 0), backgroundColor: "rgba(54, 162, 235, 0.7)" }] });
+        setTiempoAtencionData({ labels, datasets: [{ label: "Promedio de tiempo de atención (minutos)", data: keys.map((key) => times[key] / countsTiempo[key] || 0), backgroundColor: "rgba(75, 192, 192, 0.7)" }] });
       };
   
       fetchTurnosData();

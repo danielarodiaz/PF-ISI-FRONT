@@ -4,6 +4,11 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, CartesianGrid 
 } from 'recharts';
+import {
+  parseBackendUtcDate,
+  getHourInUserTimeZone,
+  diffMinutesBetweenUtcDates,
+} from "../helpers/dateTime";
 
 const DashboardMetrics = () => {
   const [loading, setLoading] = useState(true);
@@ -27,7 +32,10 @@ const DashboardMetrics = () => {
   const turnosUltimos7Dias = useMemo(() => {
     const hace7Dias = new Date();
     hace7Dias.setDate(hace7Dias.getDate() - 7);
-    return rawData.filter(t => new Date(t.fechaDeCreacion) >= hace7Dias);
+    return rawData.filter((t) => {
+      const createdAt = parseBackendUtcDate(t.fechaDeCreacion);
+      return createdAt && createdAt >= hace7Dias;
+    });
   }, [rawData]);
 
  const datosTramites = useMemo(() => {
@@ -50,7 +58,8 @@ const DashboardMetrics = () => {
   const datosConcurrencia = useMemo(() => {
     let manana = 0, tarde = 0, noche = 0;
     turnosUltimos7Dias.forEach(t => {
-      const hora = new Date(t.fechaDeCreacion).getHours();
+      const hora = getHourInUserTimeZone(t.fechaDeCreacion);
+      if (hora === null) return;
       if (hora >= 6 && hora < 12) manana++;
       else if (hora >= 12 && hora < 20) tarde++;
       else noche++;
@@ -66,7 +75,8 @@ const DashboardMetrics = () => {
     const atendidos = turnosUltimos7Dias.filter(t => t.idEstadoTurno === 3);
     if (atendidos.length === 0) return 0;
     const total = atendidos.reduce((acc, t) => {
-      const min = (new Date(t.fechaUltimaModificacion) - new Date(t.fechaDeCreacion)) / 60000;
+      const min = diffMinutesBetweenUtcDates(t.fechaDeCreacion, t.fechaUltimaModificacion);
+      if (min === null) return acc;
       return acc + Math.max(0, min);
     }, 0);
     return Math.round(total / atendidos.length);
@@ -148,14 +158,16 @@ const DashboardMetrics = () => {
                  // Aquí calculamos el promedio de espera real para esa franja
                  // En tu tesis, esto ayuda a detectar cuándo la espera supera los límites
                  const turnosFranja = turnosUltimos7Dias.filter(t => {
-                    const hora = new Date(t.fechaDeCreacion).getHours();
+                    const hora = getHourInUserTimeZone(t.fechaDeCreacion);
+                    if (hora === null) return false;
                     if (item.name === 'Mañana') return hora >= 6 && hora < 12;
                     if (item.name === 'Tarde') return hora >= 12 && hora < 20;
                     return hora >= 20 || hora < 6;
                  });
                  
                  const sumaEspera = turnosFranja.reduce((acc, t) => {
-                    const diff = (new Date(t.fechaUltimaModificacion) - new Date(t.fechaDeCreacion)) / 60000;
+                    const diff = diffMinutesBetweenUtcDates(t.fechaDeCreacion, t.fechaUltimaModificacion);
+                    if (diff === null) return acc;
                     return acc + Math.max(0, diff);
                  }, 0);
                  
