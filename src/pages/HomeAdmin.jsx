@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import TableFila from "../components/TableFila";
-import { atenderTurnoConId, putFinalizarAtencion, createAdminFilaStream } from "../helpers/filaApi";
+// 👇 Agregamos getTramites a la importación
+import { atenderTurnoConId, putFinalizarAtencion, createAdminFilaStream, getTramites } from "../helpers/filaApi";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import confetti from "canvas-confetti";
@@ -23,22 +24,18 @@ const shootSuccessConfetti = () => {
     zIndex: 2000,
   };
 
-  confetti({
-    ...defaults,
-    particleCount: Math.floor(count * 0.6),
-    origin: { x: 0.15, y: 0.75 },
-  });
-  confetti({
-    ...defaults,
-    particleCount: Math.floor(count * 0.4),
-    origin: { x: 0.85, y: 0.75 },
-  });
+  confetti({ ...defaults, particleCount: Math.floor(count * 0.6), origin: { x: 0.15, y: 0.75 } });
+  confetti({ ...defaults, particleCount: Math.floor(count * 0.4), origin: { x: 0.85, y: 0.75 } });
 };
 
 const HomeAdmin = () => {
   const [fila, setFila] = useState([]);
   const [turnoActual, setTurnoActual] = useState(null);
   const [atendiendo, setAtendiendo] = useState(false);
+  
+  // 👇 NUEVO ESTADO: Para guardar la lista de todos los trámites posibles
+  const [listaTramites, setListaTramites] = useState([]);
+  
   const streamRef = useRef(null);
   const navigate = useNavigate();
   const pendientesCount = fila.filter((item) => !item.atendiendo && !item.atendido).length;
@@ -48,6 +45,19 @@ const HomeAdmin = () => {
       ? `(${pendientesCount}) Admin Turnos | InfoTrack`
       : "Admin Turnos | InfoTrack";
   }, [pendientesCount]);
+
+  // 👇 NUEVO EFECTO: Cargamos los trámites al inicio para tenerlos listos en el modal
+  useEffect(() => {
+    const fetchTramites = async () => {
+      try {
+        const data = await getTramites();
+        setListaTramites(data || []);
+      } catch (error) {
+        console.error("Error al cargar lista de trámites:", error);
+      }
+    };
+    fetchTramites();
+  }, []);
 
   const mapTurno = (turnoDb) => {
     if (!turnoDb) return null;
@@ -73,62 +83,103 @@ const HomeAdmin = () => {
       atendido: item.turno.estadoTurno.descripcion === "Atendido",
     }));
 
-useEffect(() => {
-  try {
-    const stream = createAdminFilaStream();
-    streamRef.current = stream;
+  useEffect(() => {
+    try {
+      const stream = createAdminFilaStream();
+      streamRef.current = stream;
 
-    stream.addEventListener("fila.snapshot", (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        setFila(mapFila(payload.fila || []));
-        setTurnoActual(mapTurno(payload.turnoEnVentanilla));
-        setAtendiendo(Boolean(payload.turnoEnVentanilla));
-      } catch (error) {
-        console.error("Error parseando SSE admin:", error);
+      stream.addEventListener("fila.snapshot", (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          setFila(mapFila(payload.fila || []));
+          setTurnoActual(mapTurno(payload.turnoEnVentanilla));
+          setAtendiendo(Boolean(payload.turnoEnVentanilla));
+        } catch (error) {
+          console.error("Error parseando SSE admin:", error);
+        }
+      });
+
+      stream.onerror = () => {};
+    } catch (error) {
+      console.error("No se pudo iniciar stream SSE admin:", error);
+      if (error.response && error.response.status === 401) {
+        cerrarSesionLocal();
+        navigate("/loginAdmin");
+        Swal.fire("Error", "Sesión expirada. Por favor, inicie sesión nuevamente.", "error");
       }
-    });
-
-    // EventSource ya reintenta solo; evitamos cerrar/reconectar manualmente para no generar flood.
-    stream.onerror = () => {};
-  } catch (error) {
-    console.error("No se pudo iniciar stream SSE admin:", error);
-    if (error.response && error.response.status === 401) {
-      cerrarSesionLocal();
-      navigate("/loginAdmin");
-      Swal.fire("Error", "Sesión expirada. Por favor, inicie sesión nuevamente.", "error");
     }
-  }
 
-  return () => {
-    if (streamRef.current) {
-      streamRef.current.close();
-    }
-  };
-}, []);
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.close();
+      }
+    };
+  }, [navigate]);
 
-  // --- ACCIONES ---
   const atenderTurno = async (turno) => {
     try {
       await atenderTurnoConId(turno.id);
       setTurnoActual(turno);
       setAtendiendo(true);
-      
     } catch {
       Swal.fire("Error", "No se pudo atender el turno. Verifique si ya hay uno en atención.", "error");
     }
   };
 
+  // 👇 LÓGICA MODIFICADA: El modal inteligente para auditar el trámite
   const finalizarAtencion = async () => {
-    if (turnoActual) {
+    if (!turnoActual) return;
+
+    // Armamos las opciones del select dinámicamente
+    const opcionesHTML = listaTramites.map(t => 
+      `<option value="${t.descripcion}" ${t.descripcion === turnoActual.tramite ? 'selected' : ''}>
+        ${t.descripcion}
+      </option>`
+    ).join('');
+
+    const { value: formValues, isConfirmed } = await Swal.fire({
+      title: 'Finalizar Atención',
+      html: `
+        <div class="text-left mt-4 space-y-4">
+          <div>
+            <label class="block mb-2 text-sm font-bold text-slate-700">¿Cuál fue el trámite real?</label>
+            <select id="swal-tramite" class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none">
+              ${opcionesHTML}
+            </select>
+            <p class="text-xs text-slate-500 mt-1">Modificalo si el alumno se equivocó al sacar el turno.</p>
+          </div>
+          <div>
+            <label class="block mb-2 text-sm font-bold text-slate-700">Comentarios (Opcional)</label>
+            <textarea id="swal-comentario" rows="3" class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ej: Vino por inscripción a equipo de fútbol..."></textarea>
+          </div>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Guardar y Finalizar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#16a34a', // Verde success
+      preConfirm: () => {
+        return {
+          tramiteReal: document.getElementById('swal-tramite').value,
+          comentario: document.getElementById('swal-comentario').value
+        };
+      }
+    });
+
+    if (isConfirmed && formValues) {
       try {
-        await putFinalizarAtencion();
+        // 🔥 ACÁ LE PASÁS LOS NUEVOS DATOS A TU API 🔥
+        // Vas a tener que modificar putFinalizarAtencion para que acepte estos parámetros
+        await putFinalizarAtencion(turnoActual.id, formValues.tramiteReal, formValues.comentario);
+        
         setAtendiendo(false);
         setTurnoActual(null);
         shootSuccessConfetti();
         
       } catch (error) {
         console.error("Error al finalizar:", error);
+        Swal.fire("Error", "Hubo un problema al guardar la finalización del turno.", "error");
       }
     }
   };
@@ -184,7 +235,7 @@ useEffect(() => {
                 Gestionar FAQs
             </button>
 
-            {/* Separador vertical (solo visible en desktop) */}
+            {/* Separador vertical */}
             <div className="hidden xl:block w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1"></div>
 
             <button 
