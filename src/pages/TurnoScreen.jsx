@@ -35,32 +35,45 @@ export const TurnoPage = () => {
     
     const personasActual = personas ?? 0;
 
-    // --- LÓGICA DE BARRA DE PROGRESO ---
-    // Recuperamos o guardamos la posición inicial
+    // --- LÓGICA DE BARRA DE PROGRESO (HÍBRIDA) ---
     if (initialAheadRef.current === null) {
       const ref = getTurnoActivoRef();
       const persistedInitial = Number(ref?.initialPersonasAdelante);
       
-      if (Number.isFinite(persistedInitial) && persistedInitial >= 0) {
+      if (Number.isFinite(persistedInitial) && persistedInitial > 0) {
         initialAheadRef.current = persistedInitial;
-      } else {
+      } else if (personasActual > 0) {
         initialAheadRef.current = personasActual;
         updateTurnoActivoRef({ initialPersonasAdelante: personasActual });
       }
     }
 
-    const initialAhead = Math.max(0, Number(initialAheadRef.current));
-    const denominator = Math.max(1, initialAhead);
+    const initialAhead = Math.max(1, Number(initialAheadRef.current));
     const progressed = Math.max(0, initialAhead - personasActual);
     
-    // Calculamos el porcentaje
-    let progresoReal = Math.round((progressed / denominator) * 100);
-    progresoReal = Math.max(5, Math.min(95, progresoReal));
+    // 1. Cálculo Matemático Clásico (División)
+    const progresoMatematico = Math.round((progressed / initialAhead) * 100);
+    
+    // 2. Cálculo UX Tesis (Tu idea: 1 = 90%, 2 = 80%, etc.)
+    const progresoUX = 100 - (personasActual * 10);
+
+    let progresoReal;
+    
+    if (personasActual === 0) {
+      // Si es tu turno, 100% clavado.
+      progresoReal = 100;
+    } else {
+      // Elegimos el porcentaje más alto entre la división y tu idea.
+      // Le ponemos un piso de 5% para que nunca se vea vacía, 
+      // y un techo de 98% para que no parezca que ya es tu turno si aún hay 1 persona.
+      progresoReal = Math.max(5, progresoMatematico, progresoUX);
+      progresoReal = Math.min(98, progresoReal);
+    }
 
     // --- SETEO DE ESTADOS ---
     setPersonasAdelante(personasActual);
     setTiempoEspera(personasActual * promedioFranja); 
-    setProgreso(initialAhead === 0 ? 95 : progresoReal);
+    setProgreso(progresoReal);
 
     // --- LÓGICA DE ESTADO DEL TURNO ---
     // Si ya lo atendieron o se canceló, lo sacamos de la pantalla
