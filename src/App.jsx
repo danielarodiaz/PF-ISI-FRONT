@@ -43,37 +43,48 @@ function App() {
     <ThemeProvider>
       <BrowserRouter basename={routerBaseName}>
         <Routes>
-            {/* RUTAS PÚBLICAS
-              Todas estas rutas comparten el Navbar y el fondo del PublicLayout 
-            */}
+          
+          {/* =========================================
+              RUTAS PÚBLICAS (Alumnos)
+              ========================================= */}
           <Route element={<PublicLayout />}>
-            {/* <Route element={<OperatingHoursGuard />}> */}
+            
+            {/* 🟢 ABRIMOS EL GUARDIA DE HORARIOS */}
+            <Route element={<OperatingHoursGuard />}>
                 <Route path="/" element={<MainScreen />} />
                 <Route path="/fila" element={<FilaScreen />} />
                 <Route path="/turno" element={<TurnoScreen />} />
                 <Route path="/chatbot" element={<ChatbotScreen />} />
                 <Route path="/faq" element={<FaqScreen />} />
                 <Route path="/whatsapp" element={<WhatsAppScreen />} />
-            <Route/>   
-          {/* </Route> */}
-            <Route
-              path="/admin/*"
-              element={
-                <ProtectedRoutes login={login}>
-                  <RoutesApp />
-                </ProtectedRoutes>
-              }
-            /> 
-            </Route>
+            </Route> {/* 🔴 CERRAMOS EL GUARDIA CORRECTAMENTE */}
+            
+          </Route> {/* 🔴 CERRAMOS EL PUBLIC LAYOUT */}
 
-            {/* LOGIN ADMINISTRADOR (Sin layout público) */}
-            <Route 
-              path="/loginAdmin" 
-              element={<LoginAdmin cambiarLogin={cambiarLogin} />} 
-            />
 
-            {/* Redirección por defecto a Home */}
-            <Route path="*" element={<Navigate to="/" />} />
+          {/* =========================================
+              RUTAS PRIVADAS Y DE ADMIN
+              ========================================= */}
+          
+          {/* PANEL DE ADMINISTRADOR (Sin guardia de horas y sin layout de alumnos) */}
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoutes login={login}>
+                <RoutesApp />
+              </ProtectedRoutes>
+            }
+          /> 
+
+          {/* LOGIN ADMINISTRADOR */}
+          <Route 
+            path="/loginAdmin" 
+            element={<LoginAdmin cambiarLogin={cambiarLogin} />} 
+          />
+
+          {/* Redirección por defecto a Home para cualquier ruta inventada */}
+          <Route path="*" element={<Navigate to="/" />} />
+          
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
