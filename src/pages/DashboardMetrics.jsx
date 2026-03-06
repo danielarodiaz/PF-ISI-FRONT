@@ -10,10 +10,16 @@ import {
   getHourInUserTimeZone,
   diffMinutesBetweenUtcDates,
 } from "../helpers/dateTime";
+// 👇 1. Importamos useNavigate y los íconos para el encabezado
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, BarChart2 } from "lucide-react";
 
 const DashboardMetrics = () => {
   const [loading, setLoading] = useState(true);
   const [rawData, setRawData] = useState([]);
+  
+  // 👇 2. Inicializamos el hook de navegación
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,11 +63,9 @@ const DashboardMetrics = () => {
  const datosConcurrencia = useMemo(() => {
     let manana = 0, tarde = 0;
     turnosUltimos7Dias.forEach(t => {
-      // Usamos el timezone correcto para leer cuándo se creó el turno
       const hora = getInstitutionDecimalTime(new Date(t.fechaDeCreacion));
       if (isNaN(hora)) return;
       
-      // Separamos Mañana/Tarde basándonos en el fin de la mañana configurado en el .env
       if (hora <= SHIFT_CONFIG.morningEnd) manana++;
       else tarde++;
     });
@@ -85,7 +89,30 @@ const DashboardMetrics = () => {
   if (loading) return <div className="p-10 text-center text-slate-500 font-medium">Cargando métricas de InfoTrack...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
+      
+      {/* 👇 3. NUEVO ENCABEZADO CON BOTÓN VOLVER */}
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors gap-4">
+         <div className="flex items-center gap-4">
+           <button
+             onClick={() => navigate("/admin/homeAdmin")}
+             className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition-colors text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+             title="Volver al panel principal"
+           >
+             <ArrowLeft size={24} />
+           </button>
+           <div>
+             <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+               <BarChart2 className="text-blue-500" />
+               Dashboard de Métricas
+             </h2>
+             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+               Análisis de concurrencia y tiempos de atención de los últimos 7 días
+             </p>
+           </div>
+         </div>
+      </header>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         
         {/* IZQUIERDA: PANEL PRINCIPAL GIGANTE */}
@@ -108,10 +135,10 @@ const DashboardMetrics = () => {
           </div>
         </div>
 
-        {/* DERECHA: COLUMNA DE INDICADORES (Corregido contenedor duplicado) */}
+        {/* DERECHA: COLUMNA DE INDICADORES */}
         <div className="flex flex-col gap-6">
           
-          {/* Tarjeta 1: Concurrencia (Distribución de carga) */}
+          {/* Tarjeta 1: Concurrencia */}
           <div className="bg-white dark:bg-slate-900 shadow-lg rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Concurrencia Total</h3>
             <div className="h-40">
@@ -125,14 +152,13 @@ const DashboardMetrics = () => {
               </ResponsiveContainer>
             </div>
             
-            {/* 2. ELIMINAMOS LA LEYENDA "NOCHE" */}
             <div className="flex justify-around mt-4 text-[10px] font-bold text-slate-500 uppercase">
               <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-400" /> Mañana</span>
               <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /> Tarde</span>
             </div>
           </div>
 
-          {/* Tarjeta 2: Eficiencia Operativa (Tiempo de Atención) */}
+          {/* Tarjeta 2: Eficiencia Operativa */}
           <div className="bg-white dark:bg-slate-900 shadow-lg rounded-2xl p-6 border border-slate-200 dark:border-slate-800 text-center">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Tiempo de Atención</h3>
             <div className="text-5xl font-black text-slate-800 dark:text-slate-100 mb-1">{datosAtencion}</div>
@@ -147,18 +173,14 @@ const DashboardMetrics = () => {
             <p className="text-[9px] text-slate-400 mt-2 uppercase">Promedio por Turno Finalizado</p>
           </div>
 
-          {/* Tarjeta 3: Tiempo de Espera Promedio (Calidad de Servicio) */}
+          {/* Tarjeta 3: Tiempo de Espera */}
           <div className="bg-white dark:bg-slate-900 shadow-lg rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Espera Promedio</h3>
              <div className="space-y-4">
-               
-               {/* 3. AHORA .map() SOLO ITERA SOBRE MAÑANA Y TARDE */}
                {datosConcurrencia.map((item, i) => {
                  const turnosFranja = turnosUltimos7Dias.filter(t => {
                     const hora = getHourInUserTimeZone(t.fechaDeCreacion);
                     if (hora === null) return false;
-                    
-                    // Adaptamos el filtro a la nueva lógica
                     if (item.name === 'Mañana') return hora < 14;
                     if (item.name === 'Tarde') return hora >= 14;
                     return false;
