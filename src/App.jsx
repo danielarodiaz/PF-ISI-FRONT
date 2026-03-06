@@ -48,8 +48,6 @@ function App() {
               RUTAS PÚBLICAS (Alumnos)
               ========================================= */}
           <Route element={<PublicLayout />}>
-            
-            {/* 🟢 ABRIMOS EL GUARDIA DE HORARIOS */}
             <Route element={<OperatingHoursGuard />}>
                 <Route path="/" element={<MainScreen />} />
                 <Route path="/fila" element={<FilaScreen />} />
@@ -57,16 +55,10 @@ function App() {
                 <Route path="/chatbot" element={<ChatbotScreen />} />
                 <Route path="/faq" element={<FaqScreen />} />
                 <Route path="/whatsapp" element={<WhatsAppScreen />} />
-            </Route> {/* 🔴 CERRAMOS EL GUARDIA CORRECTAMENTE */}
+            </Route> 
             
-          </Route> {/* 🔴 CERRAMOS EL PUBLIC LAYOUT */}
+          </Route>
 
-
-          {/* =========================================
-              RUTAS PRIVADAS Y DE ADMIN
-              ========================================= */}
-          
-          {/* PANEL DE ADMINISTRADOR (Sin guardia de horas y sin layout de alumnos) */}
           <Route
             path="/admin/*"
             element={

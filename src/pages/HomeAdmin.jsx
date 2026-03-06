@@ -303,7 +303,7 @@ const HomeAdmin = () => {
               </div>
               
               <div className="p-0 overflow-x-auto flex-grow">
-                 <TableFila fila={fila} onAtenderTurno={atenderTurno} />
+                 <TableFila fila={fila} onAtenderTurno={atenderTurno} turnoActual={turnoActual} />
               </div>
            </div>
         </div>
