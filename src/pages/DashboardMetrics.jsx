@@ -10,15 +10,14 @@ import {
   getHourInUserTimeZone,
   diffMinutesBetweenUtcDates,
 } from "../helpers/dateTime";
-// 👇 1. Importamos useNavigate y los íconos para el encabezado
+// Importamos useNavigate y los íconos (agregamos XCircle para los cancelados)
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BarChart2 } from "lucide-react";
+import { ArrowLeft, BarChart2, XCircle } from "lucide-react";
 
 const DashboardMetrics = () => {
   const [loading, setLoading] = useState(true);
   const [rawData, setRawData] = useState([]);
   
-  // 👇 2. Inicializamos el hook de navegación
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -86,11 +85,24 @@ const DashboardMetrics = () => {
     return Math.round(total / atendidos.length);
   }, [turnosUltimos7Dias]);
 
+  // 👇 NUEVA LÓGICA: Contar Turnos Cancelados
+  const datosCancelados = useMemo(() => {
+    // Busca turnos que tengan ID 4 (o el ID que uses para cancelados) 
+    // o que su descripción diga "Cancelado"
+    const cancelados = turnosUltimos7Dias.filter(t => 
+      t.idEstadoTurno === 4 || 
+      (t.estadoTurno?.descripcion && t.estadoTurno.descripcion.toLowerCase().includes("cancelado"))
+    );
+    return cancelados.length;
+  }, [turnosUltimos7Dias]);
+
+
+  if (loading) return <div className="p-10 text-center text-slate-500 font-medium">Cargando métricas de InfoTrack...</div>;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
       
-      {/* 👇 3. NUEVO ENCABEZADO CON BOTÓN VOLVER */}
+      {/* ENCABEZADO */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors gap-4">
          <div className="flex items-center gap-4">
            <button
@@ -210,6 +222,18 @@ const DashboardMetrics = () => {
                })}
              </div>
              <p className="text-[9px] text-slate-400 mt-4 text-center uppercase">Objetivo de Fila: &lt; 20 min</p>
+          </div>
+
+          {/* 👇 NUEVA TARJETA: Turnos Cancelados */}
+          <div className="bg-white dark:bg-slate-900 shadow-lg rounded-2xl p-6 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Turnos Cancelados</h3>
+              <div className="text-3xl font-black text-red-500 dark:text-red-400">{datosCancelados}</div>
+              <p className="text-[10px] text-slate-500 uppercase mt-1">En los últimos 7 días</p>
+            </div>
+            <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+              <XCircle className="text-red-500 dark:text-red-400" size={24} />
+            </div>
           </div>
 
         </div>

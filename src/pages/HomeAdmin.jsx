@@ -5,13 +5,16 @@ import { atenderTurnoConId, putFinalizarAtencion, createAdminFilaStream, getTram
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import confetti from "canvas-confetti";
+import { ClipboardList } from "lucide-react";
 import { cerrarSesion, cerrarSesionLocal } from "../helpers/login";
 import { 
   RefreshCw, 
   CheckSquare, 
   LogOut, 
   BarChart2, 
-  MessageCircleQuestion 
+  MessageCircleQuestion ,
+  Moon, 
+  Sun
 } from "lucide-react";
 
 const shootSuccessConfetti = () => {
@@ -32,6 +35,33 @@ const HomeAdmin = () => {
   const [fila, setFila] = useState([]);
   const [turnoActual, setTurnoActual] = useState(null);
   const [atendiendo, setAtendiendo] = useState(false);
+
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (savedTheme === "dark" || (!savedTheme && systemPrefersDark)) {
+      setIsDarkMode(true);
+      document.documentElement.classList.add("dark");
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+      setIsDarkMode(true);
+    }
+  };
+
   
   // 👇 NUEVO ESTADO: Para guardar la lista de todos los trámites posibles
   const [listaTramites, setListaTramites] = useState([]);
@@ -241,6 +271,22 @@ const HomeAdmin = () => {
                 <MessageCircleQuestion size={18} />
                 Gestionar FAQs
             </button>
+
+            <button 
+              onClick={() => navigate("/admin/historial")}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 rounded-lg font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors border border-emerald-100 dark:border-emerald-900/50"
+            >
+                  <ClipboardList size={18} />
+                  Ver Historial
+           </button>
+
+           <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+            title="Cambiar tema"
+          >
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
 
             {/* Separador vertical */}
             <div className="hidden xl:block w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1"></div>

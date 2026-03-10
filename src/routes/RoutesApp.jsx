@@ -4,6 +4,7 @@ import HomeAdmin from "../pages/HomeAdmin";
 import TurnosChart from "../pages/TurnosChart";
 import DashboardMetrics from "../pages/DashboardMetrics";
 import FaqsAdmin from "../pages/FaqsAdmin";
+import HistorialTurnos from "../pages/HistorialTurnos";
 
 const RoutesApp = () => {
   console.log("[admin-debug][RoutesApp] render", {
@@ -16,6 +17,7 @@ const RoutesApp = () => {
       <Route path="reportes" element={<TurnosChart />} />
       <Route path="dashboard" element={<DashboardMetrics />} />
       <Route path="faqs" element={<FaqsAdmin />} />
+      <Route path="/historial" element={<HistorialTurnos />} />
       <Route path="*" element={<Navigate to="homeAdmin" replace />} />
     </Routes>
   );
