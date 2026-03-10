@@ -33,7 +33,6 @@ const DashboardMetrics = () => {
     fetchData();
   }, []);
 
-  
   // --- LÓGICA DE DATOS ---
   const turnosUltimos7Dias = useMemo(() => {
     const hace7Dias = new Date();
@@ -62,7 +61,6 @@ const DashboardMetrics = () => {
     turnosUltimos7Dias.forEach(t => {
       const hora = getInstitutionDecimalTime(new Date(t.fechaDeCreacion));
       if (isNaN(hora)) return;
-      
       if (hora <= SHIFT_CONFIG.morningEnd) manana++;
       else tarde++;
     });
@@ -72,12 +70,10 @@ const DashboardMetrics = () => {
     ];
   }, [turnosUltimos7Dias]);
 
-  // 👇 LÓGICA ACTUALIZADA: "Tiempo de Atención" (Duración real en ventanilla)
   const datosAtencion = useMemo(() => {
     const atendidos = turnosUltimos7Dias.filter(t => t.idEstadoTurno === 3 && t.fechaInicioAtencion);
     if (atendidos.length === 0) return 0;
     const total = atendidos.reduce((acc, t) => {
-      // Restamos Inicio de Atención vs Fin de Atención
       const min = diffMinutesBetweenUtcDates(t.fechaInicioAtencion, t.fechaUltimaModificacion);
       if (min === null) return acc;
       return acc + Math.max(0, min);
@@ -85,19 +81,42 @@ const DashboardMetrics = () => {
     return Math.round(total / atendidos.length);
   }, [turnosUltimos7Dias]);
 
-  const datosCancelados = useMemo(() => {
+  // 👇 Contamos solo el TOTAL para la tarjetita de la derecha
+  const totalCancelados = useMemo(() => {
+    return turnosUltimos7Dias.filter(t => 
+      t.idEstadoTurno === 4 || 
+      (t.estadoTurno?.descripcion && t.estadoTurno.descripcion.toLowerCase().includes("cancelado"))
+    ).length;
+  }, [turnosUltimos7Dias]);
+
+  // 👇 Armamos los datos para el NUEVO GRÁFICO de abajo
+  const datosCanceladosGrafico = useMemo(() => {
     const cancelados = turnosUltimos7Dias.filter(t => 
       t.idEstadoTurno === 4 || 
       (t.estadoTurno?.descripcion && t.estadoTurno.descripcion.toLowerCase().includes("cancelado"))
     );
-    return cancelados.length;
+
+    const agrupados = {};
+    cancelados.forEach(t => {
+      // Intentamos leerlo en minúscula o mayúscula por si el backend lo manda distinto
+      const motivoBruto = t.motivoCancelacion || t.MotivoCancelacion;
+      const motivo = motivoBruto?.trim() || "Sin motivo registrado";
+      agrupados[motivo] = (agrupados[motivo] || 0) + 1;
+    });
+
+    return Object.keys(agrupados).map(motivo => ({ 
+      // Acortamos el texto para que entre bien en el eje Y del gráfico
+      nombreCorto: motivo.length > 25 ? motivo.substring(0, 25) + '...' : motivo,
+      motivoCompleto: motivo, // Lo guardamos por si queremos mostrarlo en el Tooltip
+      cantidad: agrupados[motivo] 
+    })).sort((a, b) => b.cantidad - a.cantidad);
   }, [turnosUltimos7Dias]);
 
 
   if (loading) return <div className="p-10 text-center text-slate-500 font-medium">Cargando métricas de InfoTrack...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300 pb-20">
       
       {/* ENCABEZADO */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors gap-4">
@@ -121,9 +140,10 @@ const DashboardMetrics = () => {
          </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+      {/* DISPOSICIÓN CLÁSICA: 2 Columnas Izq / 1 Columna Der */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch mb-6">
         
-        {/* IZQUIERDA: PANEL PRINCIPAL GIGANTE */}
+        {/* IZQUIERDA: PANEL PRINCIPAL GIGANTE (Trámites) */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-8 border border-slate-200 dark:border-slate-800 flex flex-col min-h-[600px]">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Trámites más frecuentes</h2>
@@ -143,7 +163,7 @@ const DashboardMetrics = () => {
           </div>
         </div>
 
-        {/* DERECHA: COLUMNA DE INDICADORES */}
+        {/* DERECHA: COLUMNA DE INDICADORES (Originales) */}
         <div className="flex flex-col gap-6">
           
           {/* Tarjeta 1: Concurrencia */}
@@ -179,15 +199,13 @@ const DashboardMetrics = () => {
             <p className="text-[9px] text-slate-400 mt-2 uppercase">Promedio por Turno Finalizado</p>
           </div>
 
-          {/* Tarjeta 3: Tiempo de Espera (Actualizada) */}
+          {/* Tarjeta 3: Tiempo de Espera */}
           <div className="bg-white dark:bg-slate-900 shadow-lg rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Espera Promedio</h3>
              <div className="space-y-4">
                {datosConcurrencia.map((item, i) => {
                  const turnosFranja = turnosUltimos7Dias.filter(t => {
                     const hora = getHourInUserTimeZone(t.fechaDeCreacion);
-                    // Solo calculamos espera para los que fueron llamados (tienen inicio atencion) 
-                    // o los que ya fueron cerrados pero no sabemos cuando empezaron (fallback viejo)
                     if (hora === null || (!t.fechaInicioAtencion && t.idEstadoTurno !== 3)) return false;
                     if (item.name === 'Mañana') return hora < 14;
                     if (item.name === 'Tarde') return hora >= 14;
@@ -195,7 +213,6 @@ const DashboardMetrics = () => {
                  });
                  
                  const sumaEspera = turnosFranja.reduce((acc, t) => {
-                    // 👇 LÓGICA ACTUALIZADA: Restamos Creación vs Inicio Atención (o fin si es viejo)
                     const end = t.fechaInicioAtencion || t.fechaUltimaModificacion;
                     const diff = diffMinutesBetweenUtcDates(t.fechaDeCreacion, end);
                     if (diff === null) return acc;
@@ -223,11 +240,11 @@ const DashboardMetrics = () => {
              <p className="text-[9px] text-slate-400 mt-4 text-center uppercase">Objetivo de Fila: &lt; 20 min</p>
           </div>
 
-          {/* Tarjeta 4: Turnos Cancelados */}
+          {/* Tarjeta 4: Turnos Cancelados (Mini) */}
           <div className="bg-white dark:bg-slate-900 shadow-lg rounded-2xl p-6 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Turnos Cancelados</h3>
-              <div className="text-3xl font-black text-red-500 dark:text-red-400">{datosCancelados}</div>
+              <div className="text-3xl font-black text-red-500 dark:text-red-400">{totalCancelados}</div>
               <p className="text-[10px] text-slate-500 uppercase mt-1">En los últimos 7 días</p>
             </div>
             <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
@@ -237,6 +254,40 @@ const DashboardMetrics = () => {
 
         </div>
       </div>
+
+      {/* 👇 NUEVO: GRÁFICO DE CANCELACIONES AL FONDO DE LA PÁGINA */}
+      <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-8 border border-slate-200 dark:border-slate-800 flex flex-col min-h-[400px]">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Motivos de Cancelación</h2>
+          <p className="text-slate-500">Distribución de las razones por las cuales los turnos no fueron completados</p>
+        </div>
+        
+        <div className="flex-grow">
+          {datosCanceladosGrafico.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              {/* Usamos layout="vertical" porque los motivos son textos muy largos */}
+              <BarChart layout="vertical" data={datosCanceladosGrafico} margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                {/* width={200} le da espacio al texto a la izquierda para que no se corte */}
+                <YAxis dataKey="nombreCorto" type="category" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} width={200} />
+                <Tooltip 
+                  cursor={{fill: 'transparent'}} 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  formatter={(value, name, props) => [value, props.payload.motivoCompleto]} 
+                />
+                <Bar dataKey="cantidad" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={25} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400">
+              <XCircle size={48} className="mb-4 opacity-20" />
+              <p className="text-lg">No hay turnos cancelados registrados en este período.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 };

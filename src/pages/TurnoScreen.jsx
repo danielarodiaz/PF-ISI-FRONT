@@ -5,7 +5,8 @@ import { Users, Clock, LogOut } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";
 import { clearTurnoActivo, getTurnoActivoRef, saveTurnoActivo, updateTurnoActivoRef } from "../helpers/turnoStorage";
 import { getFila, getDatosReportes } from "../helpers/filaApi";
-
+// 👇 Importamos SweetAlert2
+import Swal from "sweetalert2";
 
 export const TurnoPage = () => {
   const navigate = useNavigate();
@@ -51,39 +52,28 @@ export const TurnoPage = () => {
     const initialAhead = Math.max(1, Number(initialAheadRef.current));
     const progressed = Math.max(0, initialAhead - personasActual);
     
-    // 1. Cálculo Matemático Clásico (División)
     const progresoMatematico = Math.round((progressed / initialAhead) * 100);
-    
-    // 2. Cálculo UX Tesis (Tu idea: 1 = 90%, 2 = 80%, etc.)
     const progresoUX = 100 - (personasActual * 10);
 
     let progresoReal;
     
     if (personasActual === 0) {
-      // Si es tu turno, 100% clavado.
       progresoReal = 100;
     } else {
-      // Elegimos el porcentaje más alto entre la división y tu idea.
-      // Le ponemos un piso de 5% para que nunca se vea vacía, 
-      // y un techo de 98% para que no parezca que ya es tu turno si aún hay 1 persona.
       progresoReal = Math.max(5, progresoMatematico, progresoUX);
       progresoReal = Math.min(98, progresoReal);
     }
 
-    // --- SETEO DE ESTADOS ---
     setPersonasAdelante(personasActual);
     setTiempoEspera(personasActual * promedioFranja); 
     setProgreso(progresoReal);
 
-    // --- LÓGICA DE ESTADO DEL TURNO ---
-    // Si ya lo atendieron o se canceló, lo sacamos de la pantalla
     if (turnoData.idEstadoTurno === 3 || turnoData.idEstadoTurno === 4) {
       clearTurnoActivo();
       navigate("/");
       return;
     }
 
-    // Calculamos en qué estado visual está (esperando, por atender, es turno)
     if (personasActual === 0 && turnoData.idEstadoTurno === 1) {
       setEsTurno(false);
       setPorAtender(true);
@@ -130,7 +120,6 @@ export const TurnoPage = () => {
         }
       });
 
-      // EventSource already handles retries automatically.
       stream.onerror = () => {};
     } catch (error) {
       console.error("No se pudo iniciar stream SSE turno:", error);
@@ -143,7 +132,6 @@ export const TurnoPage = () => {
     };
   }, [navigate]);
 
-
   useEffect(() => {
     const fetchPromedio = async () => {
       try {
@@ -153,7 +141,6 @@ export const TurnoPage = () => {
         const ahora = new Date();
         const horaDecimal = ahora.getHours() + ahora.getMinutes() / 60;
 
-        // Definimos las franjas de la institución
         const esManana = horaDecimal >= 9 && horaDecimal <= 13;
         const esTarde = horaDecimal >= 15.5 && horaDecimal <= 20.5;
 
@@ -177,7 +164,7 @@ export const TurnoPage = () => {
               return acc + Math.max(0, diff);
            }, 0);
            const promedioReal = Math.round(sumaMinutos / atendidosFranja.length);
-           setPromedioFranja(Math.max(2, promedioReal)); // Mínimo 2 min 
+           setPromedioFranja(Math.max(2, promedioReal)); 
         }
       } catch (error) {
         console.error("Error calculando el promedio:", error);
@@ -187,28 +174,115 @@ export const TurnoPage = () => {
     fetchPromedio();
   }, []);
 
-
-
   const getStatusColor = () => {
     if (esTurno) return "bg-green-500 shadow-green-200 dark:shadow-none";
     if (porAtender) return "bg-amber-500 shadow-amber-200 dark:shadow-none";
     return "bg-blue-600 shadow-blue-200 dark:shadow-none";
   };
 
-  // Función para cancelar manualmente
+  // 👇 LÓGICA DE CANCELACIÓN NUEVA (UN SOLO MODAL DINÁMICO)
   const handleCancel = async () => {
     const turnoRef = getTurnoActivoRef();
-    if (turnoRef?.publicToken) {
+    if (!turnoRef?.publicToken) return;
+
+    const isDarkMode = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+
+    // Clases de Tailwind para que los inputs queden hermosos en Claro y Oscuro
+    const inputClasses = 'w-full p-3 mt-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none outline-none transition-all';
+
+    const { value: motivoFinal, isConfirmed } = await Swal.fire({
+      title: 'Cancelar Turno',
+      text: 'Por favor, indicanos el motivo de la cancelación para ayudarnos a mejorar:',
+      // 👇 Armamos nuestro propio HTML para controlar exactamente cómo se ve
+      html: `
+        <select id="swal-select-motivo" class="${inputClasses}">
+          <option value="" disabled selected>Seleccione un motivo...</option>
+          <option value="Tiempo de espera excesivo">Tiempo de espera excesivo</option>
+          <option value="Trámite resuelto por otro medio">Trámite resuelto por otro medio</option>
+          <option value="El Chatbot resolvió mi consulta">El Chatbot resolvió mi consulta</option>
+          <option value="Error al solicitar / Turno duplicado">Error al solicitar / Turno duplicado</option>
+          <option value="Decidí postergar el trámite">Decidí postergar el trámite</option>
+          <option value="Otro">Otro motivo...</option>
+        </select>
+        
+        <textarea id="swal-input-otro" class="${inputClasses} resize-none hidden" rows="3" placeholder="Escriba el motivo aquí..."></textarea>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Confirmar Cancelación',
+      cancelButtonText: 'Volver',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: isDarkMode ? '#475569' : '#64748b',
+      background: isDarkMode ? '#1e293b' : '#fff',
+      color: isDarkMode ? '#f8fafc' : '#1e293b',
+      
+      // 👇 Esta función se ejecuta apenas se abre el cartel
+      didOpen: () => {
+        const select = document.getElementById('swal-select-motivo');
+        const textarea = document.getElementById('swal-input-otro');
+        
+        // Escuchamos cuando cambia el select
+        select.addEventListener('change', (e) => {
+          if (e.target.value === 'Otro') {
+            textarea.classList.remove('hidden'); // Mostramos el campo de texto
+            textarea.focus();
+          } else {
+            textarea.classList.add('hidden'); // Lo ocultamos
+            textarea.value = ''; // Limpiamos lo que haya escrito
+          }
+        });
+      },
+      
+      // 👇 Esta función valida y extrae el valor antes de cerrar
+      preConfirm: () => {
+        const selectValue = document.getElementById('swal-select-motivo').value;
+        const textValue = document.getElementById('swal-input-otro').value;
+
+        if (!selectValue) {
+          Swal.showValidationMessage('Debes seleccionar un motivo');
+          return false;
+        }
+
+        if (selectValue === 'Otro') {
+          if (!textValue.trim()) {
+            Swal.showValidationMessage('Por favor, escribe el motivo');
+            return false;
+          }
+          return textValue.trim(); // Mandamos el texto libre
+        }
+
+        return selectValue; // Mandamos la opción del select
+      }
+    });
+
+    if (isConfirmed && motivoFinal) {
+      // Llamamos a la API con el token y el motivo final
       try {
-        await cancelarTurnoPorToken(turnoRef.publicToken); 
+        await cancelarTurnoPorToken(turnoRef.publicToken, motivoFinal); 
         clearTurnoActivo();
+        
+        // Cartelito de éxito antes de redirigir
+        await Swal.fire({
+          title: 'Turno Cancelado',
+          text: 'El turno ha sido cancelado exitosamente.',
+          icon: 'success',
+          confirmButtonColor: '#3085d6',
+          background: isDarkMode ? '#1e293b' : '#fff',
+          color: isDarkMode ? '#f8fafc' : '#1e293b',
+        });
+
         navigate("/");
       } catch (error) {
         console.error("Error al cancelar el turno en el servidor:", error);
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo cancelar el turno. Intente nuevamente.',
+          icon: 'error',
+          background: isDarkMode ? '#1e293b' : '#fff',
+          color: isDarkMode ? '#f8fafc' : '#1e293b',
+        });
       }
     }
   };
-
   return (
     <PageLayout title={`Legajo: ${datosTurno.legajo && datosTurno.legajo !== 0 ? datosTurno.legajo : "Sin Legajo"}`}>
       <div className="max-w-2xl mx-auto text-center space-y-8">
@@ -226,7 +300,7 @@ export const TurnoPage = () => {
           )}
         </div>
 
-        {/* Stats Grid (Igual que antes) */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 flex flex-col items-center transition-colors">
             <Users className="w-8 h-8 text-blue-500 dark:text-blue-400 mb-2" />
@@ -241,7 +315,7 @@ export const TurnoPage = () => {
           </div>
         </div>
 
-        {/* Progreso (Igual que antes) */}
+        {/* Progreso */}
         {!esTurno && (
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 transition-colors">
             <div className="flex justify-between mb-2">
@@ -259,7 +333,7 @@ export const TurnoPage = () => {
           </div>
         )}
 
-        {/* Botón Cancelar corregido */}
+        {/* Botón Cancelar */}
         <button
           onClick={handleCancel}
           className="group flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 mx-auto bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/10 dark:hover:bg-red-900/30 dark:text-red-400 dark:border-red-900/50 font-semibold rounded-xl transition-all"

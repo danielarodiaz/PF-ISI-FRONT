@@ -133,9 +133,11 @@ export const putFinalizarAtencion = async () => {
   }
 };
 
-export const cancelarTurno = async (idTurno) => {
+// 1. Cancelación normal por ID (Seguramente la usa el alumno o algún lado del admin)
+export const cancelarTurno = async (idTurno, motivo = null) => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/api/Fila/${idTurno}/cancelar`);
+    // 👇 Le agregamos el objeto { motivo } como segundo parámetro
+    const response = await axios.put(`${API_BASE_URL}/api/Fila/${idTurno}/cancelar`, { motivo });
     return response.data;
   } catch (error) {
     console.error(`Error cancelando turno ${idTurno}:`, error);
@@ -143,10 +145,19 @@ export const cancelarTurno = async (idTurno) => {
   }
 };
 
-export const cancelarTurnoPorToken = async (publicToken) => {
+// 2. Cancelación del Admin (Esta ya la habíamos dejado perfecta)
+export const cancelarTurnoAdmin = async (numTurno, motivo = null) => {
+  const response = await api.put(`/${numTurno}/cancelar`, { motivo });
+  return response.data;
+};
+
+// 3. Cancelación por Token (La que usa el alumno desde su celular cuando cierra la pestaña y vuelve)
+export const cancelarTurnoPorToken = async (publicToken, motivo = null) => {
   try {
+    // 👇 Agregamos el motivo al mismo objeto donde mandábamos el token
     const response = await axios.put(`${API_BASE_URL}/api/Fila/cancelar-por-token`, {
       publicToken,
+      motivo
     });
     return response.data;
   } catch (error) {
@@ -249,6 +260,7 @@ export const registrarTelefonoEnTurnoPorToken = async (publicToken, telefono) =>
       throw error;
   }
 };
+
 
 
 // --- TRAMITES ---

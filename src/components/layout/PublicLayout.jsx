@@ -18,22 +18,24 @@ const PublicLayout = () => {
     { path: "/faq", label: "Ayuda", icon: <HelpCircle size={20} /> },
     { path: "/chatbot", label: "Asistente", icon: <MessageCircle size={20} /> },
   ];
+  
   const adminNavItems = [
     { path: "/admin/homeAdmin", label: "Turnos", icon: <LayoutDashboard size={20} /> },
     { path: "/admin/dashboard", label: "Dashboard", icon: <BarChart3 size={20} /> },
     { path: "/admin/faqs", label: "FAQs", icon: <HelpCircle size={20} /> },
   ];
+  
   const navItems = isAdminRoute ? adminNavItems : publicNavItems;
   const mobileHomePath = isAdminRoute ? "/admin/homeAdmin" : "/";
   const mobileHomeLabel = isAdminRoute ? "Panel" : "Inicio";
   const logoHomePath = isAdminRoute ? "/admin/homeAdmin" : "/";
 
   return (
-    // CAMBIO IMPORTANTE AQUÍ ABAJO:
-    // Agregamos bg-slate-50 (fondo claro), dark:bg-slate-950 (fondo oscuro) y colores de texto globales.
+    // CONTENEDOR PRINCIPAL REPARADO
+    // Asegura que ocupe el 100% de la pantalla y aplique los colores oscuros globalmente
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300">
       
-      {/* Fondo decorativo (blobs) - Ajustados para que se vean sutiles en ambos modos */}
+      {/* Fondo decorativo (blobs) */}
       <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px] -z-10 pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-purple-500/20 rounded-full blur-[100px] -z-10 pointer-events-none" />
 
@@ -44,9 +46,6 @@ const PublicLayout = () => {
           {/* Logo y Home */}
           <Link to={logoHomePath} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <img src={logoUTN} alt="UTN Logo" className="h-8 w-auto" />
-            {/* <span className="font-bold text-lg hidden sm:block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Fila Virtual
-            </span> */}
           </Link>
 
           {/* Navegación Desktop */}
@@ -83,10 +82,11 @@ const PublicLayout = () => {
         <Outlet /> 
       </main>
 
-      <Footer />
+      {/* Footer solo si NO es ruta de admin (opcional, suele quedar mejor) */}
+      {!isAdminRoute && <Footer />}
 
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-around py-3 z-50 safe-area-pb">
+      {/* Mobile Bottom Navigation (Con Padding para que no tape contenido) */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-around py-3 z-50 pb-safe">
          <Link to={mobileHomePath} className={`flex flex-col items-center gap-1 ${location.pathname === mobileHomePath ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`}>
             <Home size={24} />
             <span className="text-[10px]">{mobileHomeLabel}</span>
@@ -102,6 +102,10 @@ const PublicLayout = () => {
             </Link>
          ))}
       </div>
+      
+      {/* Espaciador invisible para que la barra inferior móvil no tape el contenido del Main */}
+      <div className="h-16 md:hidden"></div>
+
     </div>
   );
 };
