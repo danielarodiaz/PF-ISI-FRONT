@@ -262,11 +262,11 @@ const DashboardMetrics = () => {
           <p className="text-slate-500">Distribución de las razones por las cuales los turnos no fueron completados</p>
         </div>
         
-        <div className="flex-grow">
-          {datosCanceladosGrafico.length > 0 ? (
+        <div className="flex-grow w-full min-h-[300px]">
+         {datosCanceladosGrafico.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               {/* Usamos layout="vertical" porque los motivos son textos muy largos */}
-              <BarChart layout="vertical" data={datosCanceladosGrafico} margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+              <BarChart layout="vertical" data={datosCanceladosGrafico} margin={{ top: 0, right: 30, left: 50, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
                 {/* width={200} le da espacio al texto a la izquierda para que no se corte */}
