@@ -86,7 +86,6 @@ const DashboardMetrics = () => {
     return Math.round(total / atendidos.length);
   }, [turnosUltimos7Dias]);
 
-  if (loading) return <div className="p-10 text-center text-slate-500 font-medium">Cargando métricas de InfoTrack...</div>;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">

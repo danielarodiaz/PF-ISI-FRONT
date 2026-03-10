@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { cerrarSesionLocal, refrescarSesion, verificarToken } from "../helpers/login";
 import { getAccessToken } from "../helpers/authStorage";
 import Swal from "sweetalert2";
+import Loader from "../components/Loader"; // Ajustá la ruta según dónde lo guardaste
 
 const TOKEN_VALIDATION_CACHE_KEY = "adminTokenValidationCache";
 const TOKEN_VALIDATION_TTL_MS = 2 * 60 * 1000;

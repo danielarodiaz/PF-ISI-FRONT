@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { SHIFT_CONFIG, formatDecimalToTime, getInstitutionDecimalTime } from "../helpers/shiftConfig";
+import { getTurnoActivoRef } from "../helpers/turnoStorage"; // Importación clave
 
 const checkOperatingHours = () => {
   const decimalTime = getInstitutionDecimalTime(); // Hora blindada de la institución
@@ -21,7 +22,17 @@ const OperatingHoursGuard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // 👇 LÓGICA DE PUERTA CERRADA: Si está fuera de servicio, verificamos si ya está adentro
   if (isOutOfService) {
+    const turnoActivo = getTurnoActivoRef();
+    const tieneTurnoPendiente = turnoActivo && turnoActivo.publicToken;
+
+    // Si tiene turno, lo dejamos pasar a su pantalla (Outlet) aunque sea de noche.
+    if (tieneTurnoPendiente) {
+      return <Outlet />;
+    }
+
+    // Si NO tiene turno y está cerrado, le mostramos tu pantalla de la lunita 🌙
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-center transition-colors duration-300">
         <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl dark:shadow-none max-w-md w-full border border-slate-200 dark:border-slate-800">
@@ -55,6 +66,7 @@ const OperatingHoursGuard = () => {
     );
   }
 
+  // Si está en horario normal (isOutOfService es false), lo dejamos pasar
   return <Outlet />;
 };
 

@@ -120,10 +120,6 @@ const FaqsAdmin = () => {
     f.respuesta.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
-    return <div className="p-8 text-center">Cargando FAQs...</div>;
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
       
