@@ -262,21 +262,28 @@ const DashboardMetrics = () => {
           <p className="text-slate-500">Distribución de las razones por las cuales los turnos no fueron completados</p>
         </div>
         
-        <div className="flex-grow w-full min-h-[300px]">
-         {datosCanceladosGrafico.length > 0 ? (
+        {/* 👇 GRÁFICO DE CANCELACIONES AL FONDO DE LA PÁGINA */}
+      <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-8 border border-slate-200 dark:border-slate-800 flex flex-col min-h-[400px]">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Motivos de Cancelación</h2>
+          <p className="text-slate-500">Distribución de las razones por las cuales los turnos no fueron completados</p>
+        </div>
+        
+        {/* 👇 ACÁ ESTÁ EL FIX DEL TAMAÑO */}
+        <div className="flex-grow w-full h-[350px]">
+          {datosCanceladosGrafico.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              {/* Usamos layout="vertical" porque los motivos son textos muy largos */}
               <BarChart layout="vertical" data={datosCanceladosGrafico} margin={{ top: 0, right: 30, left: 50, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" dark:stroke="#334155" />
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
-                {/* width={200} le da espacio al texto a la izquierda para que no se corte */}
-                <YAxis dataKey="nombreCorto" type="category" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} width={200} />
+                {/* width={220} le da buen espacio al texto largo */}
+                <YAxis dataKey="nombreCorto" type="category" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 13}} width={220} />
                 <Tooltip 
                   cursor={{fill: 'transparent'}} 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   formatter={(value, name, props) => [value, props.payload.motivoCompleto]} 
                 />
-                <Bar dataKey="cantidad" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={25} />
+                <Bar dataKey="cantidad" fill="#ef4444" radius={[0, 6, 6, 0]} barSize={28} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -286,6 +293,7 @@ const DashboardMetrics = () => {
             </div>
           )}
         </div>
+      </div>
       </div>
 
     </div>
