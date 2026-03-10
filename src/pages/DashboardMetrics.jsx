@@ -10,7 +10,6 @@ import {
   getHourInUserTimeZone,
   diffMinutesBetweenUtcDates,
 } from "../helpers/dateTime";
-// Importamos useNavigate y los íconos (agregamos XCircle para los cancelados)
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, BarChart2, XCircle } from "lucide-react";
 
@@ -47,7 +46,6 @@ const DashboardMetrics = () => {
 
   const datosTramites = useMemo(() => {
     const conteo = {};
-    
     turnosUltimos7Dias.forEach(t => {
       const nombre = t.tramite?.descripcion || "Sin descripción"; 
       conteo[nombre] = (conteo[nombre] || 0) + 1;
@@ -74,21 +72,20 @@ const DashboardMetrics = () => {
     ];
   }, [turnosUltimos7Dias]);
 
+  // 👇 LÓGICA ACTUALIZADA: "Tiempo de Atención" (Duración real en ventanilla)
   const datosAtencion = useMemo(() => {
-    const atendidos = turnosUltimos7Dias.filter(t => t.idEstadoTurno === 3);
+    const atendidos = turnosUltimos7Dias.filter(t => t.idEstadoTurno === 3 && t.fechaInicioAtencion);
     if (atendidos.length === 0) return 0;
     const total = atendidos.reduce((acc, t) => {
-      const min = diffMinutesBetweenUtcDates(t.fechaDeCreacion, t.fechaUltimaModificacion);
+      // Restamos Inicio de Atención vs Fin de Atención
+      const min = diffMinutesBetweenUtcDates(t.fechaInicioAtencion, t.fechaUltimaModificacion);
       if (min === null) return acc;
       return acc + Math.max(0, min);
     }, 0);
     return Math.round(total / atendidos.length);
   }, [turnosUltimos7Dias]);
 
-  // 👇 NUEVA LÓGICA: Contar Turnos Cancelados
   const datosCancelados = useMemo(() => {
-    // Busca turnos que tengan ID 4 (o el ID que uses para cancelados) 
-    // o que su descripción diga "Cancelado"
     const cancelados = turnosUltimos7Dias.filter(t => 
       t.idEstadoTurno === 4 || 
       (t.estadoTurno?.descripcion && t.estadoTurno.descripcion.toLowerCase().includes("cancelado"))
@@ -162,7 +159,6 @@ const DashboardMetrics = () => {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            
             <div className="flex justify-around mt-4 text-[10px] font-bold text-slate-500 uppercase">
               <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-400" /> Mañana</span>
               <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /> Tarde</span>
@@ -174,7 +170,6 @@ const DashboardMetrics = () => {
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Tiempo de Atención</h3>
             <div className="text-5xl font-black text-slate-800 dark:text-slate-100 mb-1">{datosAtencion}</div>
             <div className="text-[10px] text-emerald-500 font-bold uppercase mb-4">Minutos en Ventanilla</div>
-            
             <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
                <div 
                  className={`h-full transition-all duration-1000 ${datosAtencion > 10 ? 'bg-orange-500' : 'bg-emerald-500'}`} 
@@ -184,21 +179,25 @@ const DashboardMetrics = () => {
             <p className="text-[9px] text-slate-400 mt-2 uppercase">Promedio por Turno Finalizado</p>
           </div>
 
-          {/* Tarjeta 3: Tiempo de Espera */}
+          {/* Tarjeta 3: Tiempo de Espera (Actualizada) */}
           <div className="bg-white dark:bg-slate-900 shadow-lg rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Espera Promedio</h3>
              <div className="space-y-4">
                {datosConcurrencia.map((item, i) => {
                  const turnosFranja = turnosUltimos7Dias.filter(t => {
                     const hora = getHourInUserTimeZone(t.fechaDeCreacion);
-                    if (hora === null) return false;
+                    // Solo calculamos espera para los que fueron llamados (tienen inicio atencion) 
+                    // o los que ya fueron cerrados pero no sabemos cuando empezaron (fallback viejo)
+                    if (hora === null || (!t.fechaInicioAtencion && t.idEstadoTurno !== 3)) return false;
                     if (item.name === 'Mañana') return hora < 14;
                     if (item.name === 'Tarde') return hora >= 14;
                     return false;
                  });
                  
                  const sumaEspera = turnosFranja.reduce((acc, t) => {
-                    const diff = diffMinutesBetweenUtcDates(t.fechaDeCreacion, t.fechaUltimaModificacion);
+                    // 👇 LÓGICA ACTUALIZADA: Restamos Creación vs Inicio Atención (o fin si es viejo)
+                    const end = t.fechaInicioAtencion || t.fechaUltimaModificacion;
+                    const diff = diffMinutesBetweenUtcDates(t.fechaDeCreacion, end);
                     if (diff === null) return acc;
                     return acc + Math.max(0, diff);
                  }, 0);
@@ -224,7 +223,7 @@ const DashboardMetrics = () => {
              <p className="text-[9px] text-slate-400 mt-4 text-center uppercase">Objetivo de Fila: &lt; 20 min</p>
           </div>
 
-          {/* 👇 NUEVA TARJETA: Turnos Cancelados */}
+          {/* Tarjeta 4: Turnos Cancelados */}
           <div className="bg-white dark:bg-slate-900 shadow-lg rounded-2xl p-6 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Turnos Cancelados</h3>
