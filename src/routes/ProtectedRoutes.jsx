@@ -81,9 +81,9 @@ const ProtectedRoutes = ({ children }) => {
     checkToken();
   }, [token, navigate]);
 
-  if (isLoading) {
-    // You could return a loading spinner here
-    return <div className="text-center py-5">Verificando acceso...</div>;
+
+  if (loading) {
+    return <Loader mensaje="Cargando preguntas frecuentes..." />;
   }
 
   if (!isAuthenticated) {
