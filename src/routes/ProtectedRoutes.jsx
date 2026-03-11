@@ -82,7 +82,7 @@ const ProtectedRoutes = ({ children }) => {
   }, [token, navigate]);
 
 
-  if (loading) {
+  if (isLoading) {
     return <Loader mensaje="Cargando preguntas frecuentes..." />;
   }
 
