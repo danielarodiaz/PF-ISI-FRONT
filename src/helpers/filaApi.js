@@ -287,3 +287,25 @@ export const getTramites = async () => {
     );
   }
 };
+
+
+// --- DATOS ACADÉMICOS (SIU MOCK) ---
+export const getDatosAcademicos = async (legajo) => {
+  try {
+    ensureBackendConfigured();
+    
+    // Hacemos el GET al nuevo endpoint BFF en tu backend de C#
+    const response = await axios.get(`${API_BASE_URL}/api/Turno/DatosAcademicos/${legajo}`);
+    
+    // Si Axios recibe un 200 OK, devuelve los datos
+    return response.data;
+  } catch (error) {
+    // Si el backend devuelve 404 (Not Found) o 400 (Bad Request), Axios tira una excepción.
+    // Extraemos el mensaje de error que mandaste desde C#
+    const mensajeError = error.response?.data?.mensaje || 
+                         error.response?.data?.detail || 
+                         "Error al consultar el sistema académico.";
+    
+    throw new Error(mensajeError);
+  }
+};

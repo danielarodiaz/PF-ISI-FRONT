@@ -6,6 +6,8 @@ import { isConfigMissingError } from "../helpers/serviceErrors";
 import { clearTurnoActivo, getTurnoActivoRef, saveTurnoActivo } from "../helpers/turnoStorage";
 import { getOrCreateDeviceId } from "../helpers/deviceId";
 import { AlertCircle, CheckCircle } from "lucide-react";
+import { getDatosAcademicos } from "../helpers/filaApi";
+import Swal from 'sweetalert2';
 
 const FilaScreen = () => {
   const navigate = useNavigate();
@@ -134,33 +136,82 @@ const FilaScreen = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (isFormDisabled) return;
-    if (checkingLegajo) return;
-    if (!noLegajo && legajo.length !== 5) return;
-    if (hasLegajoError) return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (isFormDisabled) return;
+  if (checkingLegajo) return;
+  
+  // 1. Validación local de longitud
+  if (legajo.length < 4 && !noLegajo) {
+    Swal.fire('Error', 'El legajo debe tener al menos 4 dígitos.', 'error');
+    return;
+  }
+  
+  if (hasLegajoError) return;
+
+  // 👇 2. NUEVA VALIDACIÓN ACADÉMICA (Llamando a filaApi)
+  if (!noLegajo && legajo) {
     try {
-      const legajoAEnviar = noLegajo ? null : legajo;
-      const deviceId = getOrCreateDeviceId();
-      const turnoData = await postTurnoEnFila(legajoAEnviar, indexTramite, deviceId);
-      saveTurnoActivo(turnoData);
-      navigate("/whatsapp");
+      Swal.fire({
+        title: 'Validando Legajo...',
+        text: 'Consultando situación en el sistema académico',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      // Llamamos a la función limpia de Axios que acabamos de crear
+      await getDatosAcademicos(legajo);
+      
+      // Si no tiró error, el alumno existe. Cerramos el modal de carga.
+      Swal.close();
+      
     } catch (error) {
-      console.error("Error creando turno:", error);
-      if (isConfigMissingError(error)) {
-        setServiceError("El módulo de turnos no está configurado. Contacta al administrador.");
-      } else if (error?.message?.includes("dispositivo ya tiene un turno activo")) {
-        setServiceError(`${error.message} Si recargaste o cambiaste navegador, vuelve con el link de tu turno activo.`);
-      } else if (error?.message?.includes("legajo ya se encuentra en la fila")) {
-        setErrorLegajo(error.message);
-      } else if (error?.message) {
-        setServiceError(error.message);
-      } else {
-        setServiceError("No se pudo solicitar el turno. Intenta nuevamente en unos minutos.");
-      }
+      // Si falló (ej: 404 legajo no existe), mostramos el mensaje y CORTAMOS la ejecución
+      console.error("Error validando SIU:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Legajo Inválido',
+        text: error.message
+      });
+      return; // 🛑 No avanza a crear el turno
     }
-  };
+  }
+
+  // 👇 3. FLUJO ORIGINAL DE CREACIÓN DEL TURNO
+  try {
+    const legajoAEnviar = noLegajo ? null : legajo;
+    const deviceId = getOrCreateDeviceId();
+    
+    Swal.fire({
+      title: 'Generando Turno...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    const turnoData = await postTurnoEnFila(legajoAEnviar, indexTramite, deviceId);
+    saveTurnoActivo(turnoData);
+    
+    Swal.close();
+    navigate("/whatsapp");
+    
+  } catch (error) {
+    Swal.close();
+    console.error("Error creando turno:", error);
+    
+    if (isConfigMissingError(error)) {
+      setServiceError("El módulo de turnos no está configurado. Contacta al administrador.");
+    } else if (error?.message?.includes("dispositivo ya tiene un turno activo")) {
+      setServiceError(`${error.message} Si recargaste o cambiaste navegador, vuelve con el link de tu turno activo.`);
+    } else if (error?.message?.includes("legajo ya se encuentra en la fila")) {
+      setErrorLegajo(error.message);
+    } else if (error?.message) {
+      setServiceError(error.message);
+    } else {
+      setServiceError("No se pudo solicitar el turno. Intenta nuevamente en unos minutos.");
+    }
+  }
+};
 
   return (
     <PageLayout title="Solicitar Turno">

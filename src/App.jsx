@@ -48,7 +48,7 @@ function App() {
               RUTAS PÚBLICAS (Alumnos)
               ========================================= */}
           <Route element={<PublicLayout />}>
-               <Route element={<OperatingHoursGuard />}>   
+               {/* <Route element={<OperatingHoursGuard />}>    */}
                 <Route path="/" element={<MainScreen />} />
                 <Route path="/fila" element={<FilaScreen />} />
                 <Route path="/turno" element={<TurnoScreen />} />
@@ -57,7 +57,7 @@ function App() {
                 <Route path="/whatsapp" element={<WhatsAppScreen />} />
             </Route> 
             
-           </Route>   
+           {/* </Route>    */}
 
           <Route
             path="/admin/*"
