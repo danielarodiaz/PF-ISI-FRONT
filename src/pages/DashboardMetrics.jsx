@@ -20,6 +20,7 @@ const DashboardMetrics = () => {
   const [loading, setLoading] = useState(true);
   const [rawData, setRawData] = useState([]);
   
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -116,39 +117,34 @@ const DashboardMetrics = () => {
   }, [turnosUltimos7Dias]);
 
 
-  // 👇 NUEVO: Armamos los datos cruzados de Carreras y Comisiones vs Trámites
   const datosCarrerasComisiones = useMemo(() => {
-    // Filtramos solo los turnos que tienen datos de carrera (los que sacó el bot o el front nuevo)
     const turnosValidos = turnosUltimos7Dias.filter(t => t.carreraAlumno);
-    
     const agrupados = {};
-    const nombresTramitesUnicos = new Set();
 
     turnosValidos.forEach(t => {
-      // Creamos una etiqueta combinada, ej: "Ingeniería en Sistemas (3S3)"
+      // Etiqueta para el eje Y: "Carrera (Comisión)"
       const etiqueta = `${t.carreraAlumno}${t.comisionAlumno ? ` (${t.comisionAlumno})` : ''}`;
-      const tramite = t.tramite?.descripcion || "Otro";
       
-      nombresTramitesUnicos.add(tramite);
-
       if (!agrupados[etiqueta]) {
-        agrupados[etiqueta] = { nombre: etiqueta, total: 0 };
+        agrupados[etiqueta] = { 
+          nombre: etiqueta, 
+          cantidad: 0, 
+          carrera: t.carreraAlumno // Guardamos la carrera para decidir el color
+        };
       }
-      
-      agrupados[etiqueta][tramite] = (agrupados[etiqueta][tramite] || 0) + 1;
-      agrupados[etiqueta].total += 1;
+      agrupados[etiqueta].cantidad += 1;
     });
 
-    // Lo convertimos en array y lo ordenamos por los que más trámites pidieron
-    return {
-      datos: Object.values(agrupados).sort((a, b) => b.total - a.total),
-      keysTramites: Array.from(nombresTramitesUnicos) // Lista de todas las leyendas de colores
-    };
+    return Object.values(agrupados).sort((a, b) => b.cantidad - a.cantidad);
   }, [turnosUltimos7Dias]);
 
-  // Colores fijos para los trámites (podés agregar más si tenés muchos tipos de trámites)
-  const coloresTramites = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
-
+  // Definimos los colores por carrera
+  const coloresCarreras = {
+    "Ingeniería en Sistemas de Información": "#3b82f6", // Azul
+    "Ingeniería Mecánica": "#ef4444",                 // Rojo
+    "Ingeniería Eléctrica": "#f59e0b",                 // Naranja/Ámbar
+    "Otro": "#94a3b8"                                   // Gris
+  };
 
 
   if (loading) return <Loader mensaje="Cargando métricas de InfoTrack..." />;
@@ -323,18 +319,17 @@ const DashboardMetrics = () => {
           )}
         </div>
       </div>
-
-      {/* 👇 NUEVO: GRÁFICO DE CARRERAS Y COMISIONES */}
+{/* 👇 GRÁFICO ACTUALIZADO: POR COMISIÓN Y COLOR POR CARRERA */}
       <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-8 border border-slate-200 dark:border-slate-800 flex flex-col min-h-[500px]">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Demanda por Carrera y Comisión</h2>
-          <p className="text-slate-500">Análisis detallado de qué grupos estudiantiles solicitan más trámites</p>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Trámites por Comisión</h2>
+          <p className="text-slate-500">Volumen total de atención segmentado por grupo y carrera</p>
         </div>
         
         <div className="flex-grow w-full h-[400px]">
-          {datosCarrerasComisiones.datos.length > 0 ? (
+          {datosCarrerasComisiones.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart layout="vertical" data={datosCarrerasComisiones.datos} margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
+              <BarChart layout="vertical" data={datosCarrerasComisiones} margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
                 <YAxis dataKey="nombre" type="category" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} width={200} />
@@ -342,26 +337,34 @@ const DashboardMetrics = () => {
                   cursor={{fill: 'transparent'}} 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
-                <Legend wrapperStyle={{ paddingTop: '20px' }} />
                 
-                {/* Generamos una barra dinámica por cada tipo de trámite que exista */}
-                {datosCarrerasComisiones.keysTramites.map((tramite, index) => (
-                  <Bar 
-                    key={tramite} 
-                    dataKey={tramite} 
-                    stackId="a" // Esto hace que se apilen una arriba de la otra
-                    fill={coloresTramites[index % coloresTramites.length]} 
-                    barSize={32}
-                  />
-                ))}
+                <Bar dataKey="cantidad" radius={[0, 6, 6, 0]} barSize={25}>
+                  {/* Aquí asignamos el color dinámico a cada barra individual */}
+                  {datosCarrerasComisiones.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={coloresCarreras[entry.carrera] || coloresCarreras["Otro"]} 
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
               <BarChart2 size={48} className="mb-4 opacity-20" />
-              <p className="text-lg">Aún no hay datos de carreras y comisiones registrados.</p>
+              <p className="text-lg">Aún no hay datos de comisiones registrados.</p>
             </div>
           )}
+        </div>
+
+        {/* LEYENDA MANUAL DE COLORES */}
+        <div className="flex flex-wrap gap-4 mt-6 justify-center">
+          {Object.keys(coloresCarreras).map(c => c !== "Otro" && (
+            <div key={c} className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: coloresCarreras[c] }} />
+              <span className="text-xs text-slate-500 font-medium">{c}</span>
+            </div>
+          ))}
         </div>
       </div>
 

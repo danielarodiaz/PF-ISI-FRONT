@@ -4,6 +4,7 @@ import { isConfigMissingError } from "../helpers/serviceErrors";
 import { ChevronDown, ChevronUp, HelpCircle, MessageCircleQuestion } from "lucide-react";
 import PageLayout from "../components/layout/PageLayout";
 import { formatInUserTimeZone } from "../helpers/dateTime";
+import Loader from "../components/Loader";
 
 const FaqScreen = () => {
   const [faqData, setFaqData] = useState([]);
@@ -39,6 +40,11 @@ const FaqScreen = () => {
   const toggleCollapse = (index) => {
     setExpanded(expanded === index ? null : index);
   };
+
+  if (loading) {
+    return <Loader mensaje="Cargando preguntas frecuentes..." />;
+  }
+
 
   return (
     <PageLayout title="Preguntas Frecuentes">
