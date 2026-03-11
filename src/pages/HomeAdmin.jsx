@@ -37,7 +37,7 @@ const HomeAdmin = () => {
   const [fila, setFila] = useState([]);
   const [turnoActual, setTurnoActual] = useState(null);
   const [atendiendo, setAtendiendo] = useState(false);
-
+const [loading, setLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
@@ -86,6 +86,9 @@ const HomeAdmin = () => {
         setListaTramites(data || []);
       } catch (error) {
         console.error("Error al cargar lista de trámites:", error);
+      }
+      finally{
+        setLoading(false);
       }
     };
     fetchTramites();
