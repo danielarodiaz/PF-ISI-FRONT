@@ -7,7 +7,7 @@ import { clearTurnoActivo, getTurnoActivoRef, saveTurnoActivo, updateTurnoActivo
 import { getFila, getDatosReportes } from "../helpers/filaApi";
 // 👇 Importamos SweetAlert2
 import Swal from "sweetalert2";
-import Loader from "../components/Loader";
+
 
 export const TurnoPage = () => {
   const navigate = useNavigate();
@@ -285,9 +285,7 @@ export const TurnoPage = () => {
     }
   };
 
-  if (loading) {
-    return <Loader mensaje="Cargando turno..." />;
-  }
+
   return (
     <PageLayout title={`Legajo: ${datosTurno.legajo && datosTurno.legajo !== 0 ? datosTurno.legajo : "Sin Legajo"}`}>
       <div className="max-w-2xl mx-auto text-center space-y-8">
