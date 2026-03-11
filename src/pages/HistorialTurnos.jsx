@@ -4,6 +4,7 @@ import { ArrowLeft, Search, FileText, Clock, CheckCircle, CalendarDays } from "l
 import { getDatosReportes } from "../helpers/filaApi";
 import { formatInUserTimeZone, diffMinutesBetweenUtcDates } from "../helpers/dateTime";
 import Loader from "../components/Loader";
+import { ArrowLeft, Search, FileText, Clock, CheckCircle, CalendarDays, User } from "lucide-react";
 
 const HistorialTurnos = () => {
   const navigate = useNavigate();
@@ -37,7 +38,8 @@ const HistorialTurnos = () => {
     return turnos.filter(t => 
       (t.legajo && t.legajo.toString().includes(searchTerm)) ||
       (t.tramite?.descripcion && t.tramite.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (t.nombreTurno && t.nombreTurno.toLowerCase().includes(searchTerm.toLowerCase()))
+      (t.nombreTurno && t.nombreTurno.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (t.nombreCompletoAlumno && t.nombreCompletoAlumno.toLowerCase().includes(lowerSearch))
     );
   }, [turnos, searchTerm]);
 
@@ -78,6 +80,10 @@ const HistorialTurnos = () => {
     return `${minutos} min ${segundos} seg`;
   };
 
+
+  if (loading) {
+    return <Loader mensaje="Cargando historial de turnos..." />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
@@ -127,6 +133,7 @@ const HistorialTurnos = () => {
                 <tr>
                   <th className="px-6 py-4">Fecha</th>
                   <th className="px-6 py-4">Legajo</th>
+                  <th className="px-6 py-4">Alumno</th>
                   <th className="px-6 py-4">Nro. Turno</th>
                   <th className="px-6 py-4">Trámite Realizado</th>
                   <th className="px-6 py-4 text-center">
@@ -149,6 +156,21 @@ const HistorialTurnos = () => {
                         </td>
                         <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-100">
                           {turno.legajo || "S/L"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-start gap-2">
+                            <User size={16} className="text-blue-500 mt-0.5 shrink-0"/>
+                            <div>
+                              <p className="font-semibold text-slate-800 dark:text-slate-100 leading-none">
+                                {turno.nombreCompletoAlumno || "Anónimo"}
+                              </p>
+                              {turno.carreraAlumno && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                  {turno.carreraAlumno} {turno.comisionAlumno ? `(${turno.comisionAlumno})` : ''}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 px-2 py-1 rounded font-mono text-xs font-bold">
@@ -176,7 +198,7 @@ const HistorialTurnos = () => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
+                    <td colSpan="7" className="px-6 py-12 text-center text-slate-400">
                       No se encontraron turnos en el historial.
                     </td>
                   </tr>

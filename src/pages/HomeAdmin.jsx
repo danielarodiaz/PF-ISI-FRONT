@@ -17,6 +17,8 @@ import {
   Sun
 } from "lucide-react";
 
+import Loader from "../components/Loader";
+
 const shootSuccessConfetti = () => {
   const count = 180;
   const defaults = {
@@ -241,6 +243,10 @@ const HomeAdmin = () => {
       }
     });
   };
+
+  if (loading) {
+    return <Loader mensaje="Cargando inicio del administrador..." />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">

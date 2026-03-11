@@ -6,6 +6,7 @@ import { Send, Bot, User, Loader2, RotateCcw } from "lucide-react"; // Iconos
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import PageLayout from "../components/layout/PageLayout";
+import Loader from "../components/Loader";
 
 const INITIAL_MESSAGE_DELAY_MS = 1200;
 const CHAT_SESSION_KEY = "chatbotSession";
@@ -276,6 +277,14 @@ const ChatbotScreen = () => {
           setIsLoading(false);
           return;
         }
+
+          if (!chatStatusChecked) {
+          return (
+            <PageLayout title="Asistente Virtual">
+              <Loader mensaje="Despertando a Uteniano..." />
+            </PageLayout>
+       );
+       }
 
         const unavailableMessage = isConfigMissingError(fallbackError)
           ? "El asistente no está configurado. Contacta al administrador."

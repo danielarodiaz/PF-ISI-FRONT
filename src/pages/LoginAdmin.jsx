@@ -5,6 +5,7 @@ import { LogIn } from "../helpers/login";
 import { saveAuthTokens } from "../helpers/authStorage";
 import { User, Lock, LogIn as LogInIcon } from "lucide-react"; // Iconos modernos
 import { useTheme } from "../context/ThemeContext";
+import Loader from "../components/Loader";
 
 const LoginAdmin = ({ cambiarLogin }) => {
   const navigate = useNavigate();
@@ -48,6 +49,10 @@ const LoginAdmin = ({ cambiarLogin }) => {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return <Loader mensaje="Cargando login del administrador..." />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 bg-[url('https://source.unsplash.com/random/1920x1080/?technology')] bg-cover bg-center transition-colors">

@@ -12,6 +12,9 @@ import {
 } from "../helpers/dateTime";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, BarChart2, XCircle } from "lucide-react";
+import Loader from "../components/Loader"; 
+
+
 
 const DashboardMetrics = () => {
   const [loading, setLoading] = useState(true);
@@ -113,7 +116,7 @@ const DashboardMetrics = () => {
   }, [turnosUltimos7Dias]);
 
 
-  if (loading) return <div className="p-10 text-center text-slate-500 font-medium">Cargando métricas de InfoTrack...</div>;
+  if (loading) return <Loader mensaje="Cargando métricas de InfoTrack..." />;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300 pb-20">

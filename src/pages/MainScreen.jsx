@@ -6,6 +6,7 @@ import chatbot from "../assets/chatbot.png";
 import { Clock, Info, MapPin } from "lucide-react"; // Iconos nuevos
 import { clearTurnoActivo, getTurnoActivoRef } from "../helpers/turnoStorage";
 import { getTurnoActivoPorToken } from "../helpers/filaApi";
+import Loader from "../components/Loader";
 
 // Componente de Tarjeta reutilizable (lo que ya tenías pero más limpio)
 const CardOption = ({ to, img, title, subtitle, colorInfo }) => (
@@ -61,6 +62,10 @@ const MainScreen = () => {
       isMounted = false;
     };
   }, []);
+
+  if (loading) {
+    return <Loader mensaje="Cargando InfoTrack Web..." />;
+  }
 
   return (
     <div className="space-y-8">

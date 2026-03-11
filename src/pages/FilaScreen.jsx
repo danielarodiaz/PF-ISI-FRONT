@@ -8,6 +8,7 @@ import { getOrCreateDeviceId } from "../helpers/deviceId";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { getDatosAcademicos } from "../helpers/filaApi";
 import Swal from 'sweetalert2';
+import Loader from "../components/Loader";
 
 const FilaScreen = () => {
   const navigate = useNavigate();
@@ -212,6 +213,11 @@ const handleSubmit = async (e) => {
     }
   }
 };
+
+
+if (loading) {
+    return <Loader mensaje="Cargando ingreso a fila..." />;
+  }
 
   return (
     <PageLayout title="Solicitar Turno">

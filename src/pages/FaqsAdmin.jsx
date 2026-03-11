@@ -14,6 +14,7 @@ import {
 
 import { getFaqs, postFaq, putFaq, deleteFaq } from "../helpers/faqApi"; 
 import { formatInUserTimeZone } from "../helpers/dateTime";
+import Loader from "../components/Loader";
 
 const FaqsAdmin = () => {
   const navigate = useNavigate();
@@ -119,6 +120,11 @@ const FaqsAdmin = () => {
     f.pregunta.toLowerCase().includes(searchTerm.toLowerCase()) || 
     f.respuesta.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+
+  if (loading) {
+    return <Loader mensaje="Cargando preguntas frecuentes..." />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
