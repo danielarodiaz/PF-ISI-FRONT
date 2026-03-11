@@ -5,7 +5,6 @@ import { MessageCircle, Phone, CheckCircle, XCircle } from "lucide-react";
 import Swal from "sweetalert2";
 import PageLayout from "../components/layout/PageLayout";
 import { getTurnoActivo, getTurnoActivoRef } from "../helpers/turnoStorage";
-import Loader from "../components/Loader";
 
 const WhatsAppScreen = () => {
   const navigate = useNavigate();
@@ -87,10 +86,6 @@ const WhatsAppScreen = () => {
         });
     }
 };
-
-    if (loading) {
-    return <Loader mensaje="Cargando turno..." />;
-  }
 
   return (
     <PageLayout title="Notificaciones">

@@ -1,10 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, FileText, Clock, CheckCircle, CalendarDays } from "lucide-react";
+import { ArrowLeft, Search, FileText, Clock, CheckCircle, CalendarDays, User} from "lucide-react";
 import { getDatosReportes } from "../helpers/filaApi";
 import { formatInUserTimeZone, diffMinutesBetweenUtcDates } from "../helpers/dateTime";
 import Loader from "../components/Loader";
-import { ArrowLeft, Search, FileText, Clock, CheckCircle, CalendarDays, User } from "lucide-react";
 
 const HistorialTurnos = () => {
   const navigate = useNavigate();

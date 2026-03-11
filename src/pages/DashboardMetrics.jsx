@@ -3,7 +3,7 @@ import { SHIFT_CONFIG, getInstitutionDecimalTime } from "../helpers/shiftConfig"
 import { getDatosReportes } from "../helpers/filaApi";
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, CartesianGrid 
+  PieChart, Pie, Cell, CartesianGrid, Legend
 } from 'recharts';
 import {
   parseBackendUtcDate,
@@ -114,6 +114,41 @@ const DashboardMetrics = () => {
       cantidad: agrupados[motivo] 
     })).sort((a, b) => b.cantidad - a.cantidad);
   }, [turnosUltimos7Dias]);
+
+
+  // 👇 NUEVO: Armamos los datos cruzados de Carreras y Comisiones vs Trámites
+  const datosCarrerasComisiones = useMemo(() => {
+    // Filtramos solo los turnos que tienen datos de carrera (los que sacó el bot o el front nuevo)
+    const turnosValidos = turnosUltimos7Dias.filter(t => t.carreraAlumno);
+    
+    const agrupados = {};
+    const nombresTramitesUnicos = new Set();
+
+    turnosValidos.forEach(t => {
+      // Creamos una etiqueta combinada, ej: "Ingeniería en Sistemas (3S3)"
+      const etiqueta = `${t.carreraAlumno}${t.comisionAlumno ? ` (${t.comisionAlumno})` : ''}`;
+      const tramite = t.tramite?.descripcion || "Otro";
+      
+      nombresTramitesUnicos.add(tramite);
+
+      if (!agrupados[etiqueta]) {
+        agrupados[etiqueta] = { nombre: etiqueta, total: 0 };
+      }
+      
+      agrupados[etiqueta][tramite] = (agrupados[etiqueta][tramite] || 0) + 1;
+      agrupados[etiqueta].total += 1;
+    });
+
+    // Lo convertimos en array y lo ordenamos por los que más trámites pidieron
+    return {
+      datos: Object.values(agrupados).sort((a, b) => b.total - a.total),
+      keysTramites: Array.from(nombresTramitesUnicos) // Lista de todas las leyendas de colores
+    };
+  }, [turnosUltimos7Dias]);
+
+  // Colores fijos para los trámites (podés agregar más si tenés muchos tipos de trámites)
+  const coloresTramites = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
+
 
 
   if (loading) return <Loader mensaje="Cargando métricas de InfoTrack..." />;
@@ -258,28 +293,19 @@ const DashboardMetrics = () => {
         </div>
       </div>
 
-      {/* 👇 NUEVO: GRÁFICO DE CANCELACIONES AL FONDO DE LA PÁGINA */}
-      <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-8 border border-slate-200 dark:border-slate-800 flex flex-col min-h-[400px]">
+     {/* GRÁFICO DE CANCELACIONES */}
+      <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-8 border border-slate-200 dark:border-slate-800 flex flex-col min-h-[400px] mb-6">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Motivos de Cancelación</h2>
           <p className="text-slate-500">Distribución de las razones por las cuales los turnos no fueron completados</p>
         </div>
         
-        {/* 👇 GRÁFICO DE CANCELACIONES AL FONDO DE LA PÁGINA */}
-      <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-8 border border-slate-200 dark:border-slate-800 flex flex-col min-h-[400px]">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Motivos de Cancelación</h2>
-          <p className="text-slate-500">Distribución de las razones por las cuales los turnos no fueron completados</p>
-        </div>
-        
-        {/* 👇 ACÁ ESTÁ EL FIX DEL TAMAÑO */}
         <div className="flex-grow w-full h-[350px]">
           {datosCanceladosGrafico.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart layout="vertical" data={datosCanceladosGrafico} margin={{ top: 0, right: 30, left: 50, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" dark:stroke="#334155" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
-                {/* width={220} le da buen espacio al texto largo */}
                 <YAxis dataKey="nombreCorto" type="category" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 13}} width={220} />
                 <Tooltip 
                   cursor={{fill: 'transparent'}} 
@@ -297,6 +323,46 @@ const DashboardMetrics = () => {
           )}
         </div>
       </div>
+
+      {/* 👇 NUEVO: GRÁFICO DE CARRERAS Y COMISIONES */}
+      <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-8 border border-slate-200 dark:border-slate-800 flex flex-col min-h-[500px]">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Demanda por Carrera y Comisión</h2>
+          <p className="text-slate-500">Análisis detallado de qué grupos estudiantiles solicitan más trámites</p>
+        </div>
+        
+        <div className="flex-grow w-full h-[400px]">
+          {datosCarrerasComisiones.datos.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart layout="vertical" data={datosCarrerasComisiones.datos} margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                <YAxis dataKey="nombre" type="category" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} width={200} />
+                <Tooltip 
+                  cursor={{fill: 'transparent'}} 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                
+                {/* Generamos una barra dinámica por cada tipo de trámite que exista */}
+                {datosCarrerasComisiones.keysTramites.map((tramite, index) => (
+                  <Bar 
+                    key={tramite} 
+                    dataKey={tramite} 
+                    stackId="a" // Esto hace que se apilen una arriba de la otra
+                    fill={coloresTramites[index % coloresTramites.length]} 
+                    barSize={32}
+                  />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400">
+              <BarChart2 size={48} className="mb-4 opacity-20" />
+              <p className="text-lg">Aún no hay datos de carreras y comisiones registrados.</p>
+            </div>
+          )}
+        </div>
       </div>
 
     </div>

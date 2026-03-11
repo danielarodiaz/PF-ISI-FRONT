@@ -25,6 +25,7 @@ const MainScreen = () => {
   const [turnoActivo, setTurnoActivo] = useState(null); 
   const estaAbierto = true; // Deberías calcular esto con la hora actual
   const ACTIVE_TURNO_STATES = new Set([1, 2]);
+const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -32,7 +33,11 @@ const MainScreen = () => {
       const turnoRef = getTurnoActivoRef();
       if (!turnoRef?.publicToken) {
         clearTurnoActivo();
-        if (isMounted) setTurnoActivo(null);
+        if (isMounted)
+          {
+            setTurnoActivo(null);
+            setLoading(false);
+          }
         return;
       }
 
@@ -51,9 +56,15 @@ const MainScreen = () => {
             publicToken: turnoRef.publicToken,
           });
         }
+
       } catch {
         clearTurnoActivo();
         if (isMounted) setTurnoActivo(null);
+      }
+      finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
