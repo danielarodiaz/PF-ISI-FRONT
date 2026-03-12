@@ -19,6 +19,7 @@ import Loader from "../components/Loader";
 const DashboardMetrics = () => {
   const [loading, setLoading] = useState(true);
   const [rawData, setRawData] = useState([]);
+  const [filtroTramite, setFiltroTramite] = useState("Todos");
   
   
   const navigate = useNavigate();
@@ -59,6 +60,17 @@ const DashboardMetrics = () => {
       cantidad: conteo[key] 
     })).sort((a, b) => b.cantidad - a.cantidad);
   }, [turnosUltimos7Dias]);
+
+  const listaTramitesDisponibles = useMemo(() => {
+    const tramites = new Set();
+    turnosUltimos7Dias.forEach(t => {
+      if (t.carreraAlumno && t.tramite?.descripcion) {
+        tramites.add(t.tramite.descripcion);
+      }
+    });
+    return Array.from(tramites).sort();
+  }, [turnosUltimos7Dias]);
+
 
  const datosConcurrencia = useMemo(() => {
     let manana = 0, tarde = 0;
@@ -117,26 +129,31 @@ const DashboardMetrics = () => {
   }, [turnosUltimos7Dias]);
 
 
+  // 👇 3. ACTUALIZAMOS ESTE useMemo QUE YA TENÍAS
   const datosCarrerasComisiones = useMemo(() => {
-    const turnosValidos = turnosUltimos7Dias.filter(t => t.carreraAlumno);
+    // Acá le decimos: si no eligió "Todos", filtrá también por el trámite exacto
+    const turnosValidos = turnosUltimos7Dias.filter(t => {
+      if (!t.carreraAlumno) return false;
+      if (filtroTramite !== "Todos" && t.tramite?.descripcion !== filtroTramite) return false;
+      return true;
+    });
+
     const agrupados = {};
 
     turnosValidos.forEach(t => {
-      // Etiqueta para el eje Y: "Carrera (Comisión)"
       const etiqueta = `${t.carreraAlumno}${t.comisionAlumno ? ` (${t.comisionAlumno})` : ''}`;
-      
       if (!agrupados[etiqueta]) {
         agrupados[etiqueta] = { 
           nombre: etiqueta, 
           cantidad: 0, 
-          carrera: t.carreraAlumno // Guardamos la carrera para decidir el color
+          carrera: t.carreraAlumno 
         };
       }
       agrupados[etiqueta].cantidad += 1;
     });
 
     return Object.values(agrupados).sort((a, b) => b.cantidad - a.cantidad);
-  }, [turnosUltimos7Dias]);
+  }, [turnosUltimos7Dias, filtroTramite]); // <-- IMPORTANTE: Agregar filtroTramite a las dependencias
 
   // Definimos los colores por carrera
   const coloresCarreras = {
@@ -321,9 +338,34 @@ const DashboardMetrics = () => {
       </div>
 {/* 👇 GRÁFICO ACTUALIZADO: POR COMISIÓN Y COLOR POR CARRERA */}
       <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-8 border border-slate-200 dark:border-slate-800 flex flex-col min-h-[500px]">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Trámites por Comisión</h2>
-          <p className="text-slate-500">Volumen total de atención segmentado por grupo y carrera</p>
+        
+        {/* 👇 CABECERA MODIFICADA CON EL SELECTOR */}
+        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Trámites por Comisión</h2>
+            <p className="text-slate-500">Volumen total de atención segmentado por grupo y carrera</p>
+          </div>
+          
+          {/* 👇 EL NUEVO FILTRO */}
+          <div className="relative flex items-center min-w-[250px] w-full md:w-auto">
+            <Filter size={18} className="absolute left-3 text-slate-400 pointer-events-none" />
+            <select
+              value={filtroTramite}
+              onChange={(e) => setFiltroTramite(e.target.value)}
+              className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer transition-colors"
+            >
+              <option value="Todos">Todos los Trámites</option>
+              {listaTramitesDisponibles.map(tramite => (
+                <option key={tramite} value={tramite}>
+                  {tramite.length > 35 ? tramite.substring(0, 35) + "..." : tramite}
+                </option>
+              ))}
+            </select>
+            {/* Flechita del select */}
+            <div className="absolute right-3 pointer-events-none text-slate-400">
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+            </div>
+          </div>
         </div>
         
         <div className="flex-grow w-full h-[400px]">
@@ -339,7 +381,6 @@ const DashboardMetrics = () => {
                 />
                 
                 <Bar dataKey="cantidad" radius={[0, 6, 6, 0]} barSize={25}>
-                  {/* Aquí asignamos el color dinámico a cada barra individual */}
                   {datosCarrerasComisiones.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
@@ -352,7 +393,7 @@ const DashboardMetrics = () => {
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
               <BarChart2 size={48} className="mb-4 opacity-20" />
-              <p className="text-lg">Aún no hay datos de comisiones registrados.</p>
+              <p className="text-lg">No hay datos para el trámite seleccionado.</p>
             </div>
           )}
         </div>
