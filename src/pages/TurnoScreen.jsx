@@ -12,7 +12,7 @@ import Swal from "sweetalert2";
 export const TurnoPage = () => {
   const navigate = useNavigate();
   const [posicionInicial, setPosicionInicial] = useState(null);
-  const [promedioFranja, setPromedioFranja] = useState(15);
+  const [promedioFranja, setPromedioFranja] = useState(5);
 
   const [numeroTurno, setNumeroTurno] = useState("");
   const [esTurno, setEsTurno] = useState(false);
