@@ -152,11 +152,10 @@ const handleSubmit = async (e) => {
   if (hasLegajoError) return;
 
   // 👇 2. NUEVA VALIDACIÓN ACADÉMICA (Llamando a filaApi)
-  if (!noLegajo && legajo) {
+ if (!noLegajo && legajo) {
     try {
       Swal.fire({
         title: 'Validando Legajo...',
-        text: 'Consultando situación en el sistema académico',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
       });
